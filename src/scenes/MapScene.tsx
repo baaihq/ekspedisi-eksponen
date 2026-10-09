@@ -3,7 +3,7 @@ import { Zap, HelpCircle, CheckCircle2, ChevronRight, Award, LogOut, AlertTriang
 import { TeamData, TeamProgress, DifficultyLevel } from '../types/game';
 import { GAME_LEVELS } from '../data/levels';
 import { EpisodeInfo } from '../data/episodes';
-import { EPISODE_1_CARDS } from '../data/cards';
+import { getEpisodeCards } from '../data/cards';
 import { GameImage } from '../components/common/GameImage';
 import { audioManager } from '../audio/audioManager';
 
@@ -50,6 +50,11 @@ export const MapScene: React.FC<MapSceneProps> = ({
   };
 
   const completedCount = progress.completedLevels?.length || 0;
+  const currentEpisode = episodes.find((e) => e.id === activeEpisodeId);
+  const currentEpisodeLevels =
+    currentEpisode?.levels && currentEpisode.levels.length > 0
+      ? currentEpisode.levels
+      : GAME_LEVELS;
 
   return (
     <div className="w-full space-y-4">
@@ -129,7 +134,7 @@ export const MapScene: React.FC<MapSceneProps> = ({
             >
               <BookOpen className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
               <span>
-                Koleksi ({EPISODE_1_CARDS.filter((c) => (progress.unlockedCards || []).includes(c.id)).length}/{EPISODE_1_CARDS.length})
+                Koleksi ({getEpisodeCards(activeEpisodeId).filter((c) => (progress.unlockedCards || []).includes(c.id)).length}/{getEpisodeCards(activeEpisodeId).length})
               </span>
             </button>
           </div>
@@ -252,7 +257,7 @@ export const MapScene: React.FC<MapSceneProps> = ({
 
           {/* Tiga Tingkat Kesulitan Cards */}
           <div className="space-y-3">
-            {GAME_LEVELS.map((lvl) => {
+            {currentEpisodeLevels.map((lvl) => {
               const isSelected = selectedLevelId === lvl.id;
               const isDone = progress.completedLevels?.includes(lvl.id);
 

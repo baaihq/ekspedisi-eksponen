@@ -1,5 +1,6 @@
 import { TeamData, TeamProgress, QuestionAttempt, TeacherSessionSummary, TeacherTeamSummary } from '../types/game';
 import { GAME_LEVELS } from '../data/levels';
+import { getEpisodeLevels } from '../data/episodes';
 import { getSupabase, isSupabaseConfigured } from './supabaseClient';
 
 const STORAGE_KEYS = {
@@ -278,6 +279,7 @@ export const syncService = {
         updated_at,
         team_members (id, name, role),
         team_progress (
+          episode_id,
           selected_level,
           current_question_index,
           score,
@@ -316,11 +318,6 @@ export const syncService = {
       };
     }
 
-    const questionsForLevel = (levelId: string) =>
-      GAME_LEVELS.find((l) => l.id === levelId)?.totalQuestions ?? 0;
-
-    const TOTAL_EPISODE_QUESTIONS = GAME_LEVELS.reduce((sum, l) => sum + l.totalQuestions, 0);
-
     const teams: TeacherTeamSummary[] = teamsData.map((t: any) => {
       // Ambang data progres terbaru atau level yang sedang aktif
       const progList: any[] = t.team_progress || [];
@@ -332,9 +329,24 @@ export const syncService = {
       });
       const prog = sortedProgList[0] || {};
 
-      // Selesai 3 level = Episode 1 Tuntas
+      // Tentukan tingkat dari episode milik baris progres terpilih
+      const rowEpisodeId = prog.episode_id || episodeId || 'episode-1';
+      let epLevels = getEpisodeLevels(rowEpisodeId);
+      if (!epLevels || epLevels.length === 0) {
+        epLevels = getEpisodeLevels('episode-1');
+      }
+
+      const questionsForLevel = (levelId: string) =>
+        epLevels.find((l) => l.id === levelId)?.totalQuestions ?? 0;
+
+      const TOTAL_EPISODE_QUESTIONS = epLevels.reduce((sum, l) => sum + l.totalQuestions, 0);
+
+      // Selesai seluruh level = Episode Tuntas
       const completedLevelsList: string[] = prog.completed_levels || [];
-      const isEpisodeDone = Boolean(prog.episode_completed || completedLevelsList.length >= GAME_LEVELS.length);
+      const isEpisodeDone = Boolean(
+        prog.episode_completed ||
+        (epLevels.length > 0 && completedLevelsList.length >= epLevels.length)
+      );
 
       // Hitung progres dari konfigurasi tingkat secara dinamis
       const baseSolved = completedLevelsList.reduce((sum, id) => sum + questionsForLevel(id), 0);

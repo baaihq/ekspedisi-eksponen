@@ -74,3 +74,62 @@ export const EPISODE_1_CARDS: KnowledgeCard[] = [
     unlockedAtRule: 'Tuntaskan seluruh Episode 1 untuk membuka kartu ini.',
   },
 ];
+
+export const EPISODE_2_CARDS: KnowledgeCard[] = [
+  {
+    id: 'e2-card-nol',
+    episodeId: 'episode-2',
+    level: 'jelajah',
+    emoji: '📘',
+    title: 'Pangkat Nol & Pangkat Negatif',
+    subtitle: 'Konsep Dasar Nilai Nol dan Kebalikan',
+    topic: 'Definisi a⁰ & a⁻ⁿ',
+    content: 'a⁰ = 1 untuk a ≠ 0, dan a⁻ⁿ = 1/aⁿ. Contoh: 5⁰ = 1 dan 2⁻³ = 1/8.',
+    example: 'Contoh: 10⁰ = 1 dan 10⁻³ = 1/1000 = 0,001.',
+    unlockedAtRule: 'Selesaikan sektor Pemulih Nol.',
+  },
+  {
+    id: 'e2-card-ilmiah',
+    episodeId: 'episode-2',
+    level: 'peneliti',
+    emoji: '📗',
+    title: 'Notasi Ilmiah',
+    subtitle: 'Bentuk Baku Bilangan Sangat Kecil & Besar',
+    topic: 'Bentuk a × 10ⁿ',
+    content:
+      'Bilangan ditulis a × 10ⁿ dengan 1 ≤ a < 10. Contoh: 45.000.000 = 4,5 × 10⁷ dan 0,00032 = 3,2 × 10⁻⁴.',
+    example: 'Contoh: 0,00000012 = 1,2 × 10⁻⁷.',
+    unlockedAtRule: 'Selesaikan sektor Navigator Mikro.',
+  },
+  {
+    id: 'e2-card-operasi',
+    episodeId: 'episode-2',
+    level: 'master',
+    emoji: '📙',
+    title: 'Operasi Notasi Ilmiah',
+    subtitle: 'Perkalian & Pembagian Bentuk Baku',
+    topic: 'Operasi Aljabar 10ⁿ',
+    content: 'Saat dikalikan, pangkatnya dijumlahkan. Saat dibagi, pangkatnya dikurangkan.',
+    example: 'Contoh: (2 × 10³) × (3 × 10⁴) = 6 × 10⁷.',
+    unlockedAtRule: 'Selesaikan sektor Arsitek Kuantum.',
+  },
+  {
+    id: 'e2-card-cinta',
+    episodeId: 'episode-2',
+    level: 'cinta',
+    emoji: '🕋',
+    title: 'Teliti pada Hal Kecil',
+    subtitle: 'Refleksi Karakter & Ketekunan',
+    topic: 'Hikmah & Nilai Karakter',
+    content:
+      'Bilangan yang sangat kecil pun memiliki nilai dan keteraturan. Rasulullah ﷺ mengajarkan bahwa amal yang paling dicintai Allah adalah yang dilakukan terus-menerus meskipun sedikit (HR. Bukhari dan Muslim). Ketelitian pada hal kecil adalah bagian dari belajar.',
+    example: 'Ketelitian dalam detail mikro membentuk fondasi ilmu pengetahuan yang kokoh.',
+    unlockedAtRule: 'Tuntaskan seluruh episode ini untuk membuka.',
+  },
+];
+
+export const ALL_CARDS: KnowledgeCard[] = [...EPISODE_1_CARDS, ...EPISODE_2_CARDS];
+
+export function getEpisodeCards(episodeId: string): KnowledgeCard[] {
+  return ALL_CARDS.filter((card) => card.episodeId === episodeId);
+}

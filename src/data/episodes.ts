@@ -1,6 +1,7 @@
 import { DifficultyLevel, LevelInfo, QuestionData } from '../types/game';
 import { GAME_LEVELS } from './levels';
 import { generateQuestionsForLevel } from './questions';
+import { generateEpisode2Questions } from './questionsEpisode2';
 
 export interface EpisodeInfo {
   id: string;
@@ -12,6 +13,49 @@ export interface EpisodeInfo {
   isActive: boolean;
   levels: LevelInfo[];
 }
+
+export const EPISODE_2_LEVELS: LevelInfo[] = [
+  {
+    id: 'jelajah',
+    title: 'Pemulih Nol',
+    subtitle: 'Pangkat Nol & Pangkat Bulat Negatif',
+    icon: '🌱',
+    badge: 'Tingkat 1',
+    description: 'Selidiki fenomena nilai pangkat nol dan ubah bilangan berpangkat bulat negatif menjadi pecahan dalam terowongan bawah tanah Kota Data.',
+    targetObjective: 'Memulihkan sensor awal transmisi daya mikroskopis dengan memahami konsep pangkat nol dan bulat negatif.',
+    estimatedMinutes: 10,
+    totalQuestions: 6,
+    pointsPerQuestion: 150,
+    penaltyPerWrong: 40,
+  },
+  {
+    id: 'peneliti',
+    title: 'Navigator Mikro',
+    subtitle: 'Notasi Ilmiah & Bilangan Sangat Kecil',
+    icon: '🔬',
+    badge: 'Tingkat 2',
+    description: 'Navigasi transmisi data mikroskopis dengan mengonversi ukuran nanopartikel ke dalam bentuk baku notasi ilmiah a × 10ⁿ.',
+    targetObjective: 'Menstabilkan jaringan navigasi dari serangan mikrovirus berukuran sangat kecil menggunakan notasi ilmiah.',
+    estimatedMinutes: 15,
+    totalQuestions: 6,
+    pointsPerQuestion: 250,
+    penaltyPerWrong: 60,
+  },
+  {
+    id: 'master',
+    title: 'Arsitek Kuantum',
+    subtitle: 'Penerapan Kontekstual & Operasi Campuran',
+    icon: '🏆',
+    badge: 'Tingkat 3',
+    description: 'Lakukan operasi aljabar campuran notasi ilmiah dan analisis kontekstual skala kuantum dalam batas waktu tantangan.',
+    targetObjective: 'Merekonstruksi arsitektur kuantum sektor mikro untuk membersihkan ancaman anomali data secara permanen.',
+    estimatedMinutes: 20,
+    totalQuestions: 6,
+    pointsPerQuestion: 350,
+    penaltyPerWrong: 80,
+    timerSeconds: 90,
+  },
+];
 
 export const EPISODES: EpisodeInfo[] = [
   {
@@ -31,8 +75,8 @@ export const EPISODES: EpisodeInfo[] = [
     theme: 'Terowongan Bayangan & Nanopartikel',
     curriculumTopic: 'P3: Pangkat Nol, Bulat Negatif & Notasi Ilmiah',
     description: 'Selidiki fluktuasi sub-atomik mikroskopis pada terowongan bawah tanah Kota Data menggunakan pangkat negatif dan notasi ilmiah.',
-    isActive: false, // Segera
-    levels: [],
+    isActive: true,
+    levels: EPISODE_2_LEVELS,
   },
   {
     id: 'episode-3',
@@ -60,17 +104,23 @@ export function getEpisode(id: string): EpisodeInfo | undefined {
   return EPISODES.find((ep) => ep.id === id) || EPISODES[0];
 }
 
+export function getEpisodeLevels(episodeId: string): LevelInfo[] {
+  const ep = EPISODES.find((e) => e.id === episodeId);
+  return ep ? ep.levels : [];
+}
+
 export function generateQuestionsForEpisode(
   episodeId: string,
   level: DifficultyLevel,
   seed: number
 ): QuestionData[] {
-  // Episode selain Episode 1 belum aktif dan tidak memiliki soal
-  if (episodeId !== 'episode-1') {
-    return [];
+  if (episodeId === 'episode-2') {
+    return generateEpisode2Questions(level, seed);
   }
-  // Episode 1 menggunakan generator modul bab 1
-  return generateQuestionsForLevel(level, seed);
+  if (episodeId === 'episode-1') {
+    return generateQuestionsForLevel(level, seed);
+  }
+  return [];
 }
 
 

@@ -3,8 +3,9 @@ import { motion, AnimatePresence } from 'motion/react';
 import { SceneName, TeamData, TeamProgress, DifficultyLevel, QuestionData } from './types/game';
 import { syncService } from './services/syncService';
 import { settingsService } from './services/settingsService';
-import { EPISODES, generateQuestionsForEpisode } from './data/episodes';
+import { EPISODES, generateQuestionsForEpisode, getEpisodeLevels } from './data/episodes';
 import { GAME_LEVELS } from './data/levels';
+import { getEpisodeCards } from './data/cards';
 import { audioManager } from './audio/audioManager';
 import { calculateAnswerReward, AnswerReward } from './lib/scoring';
 
@@ -213,8 +214,11 @@ export default function App() {
     const alreadyCorrect = Boolean(existingAttempt?.isCorrect);
     const attemptsCount = (existingAttempt?.attemptsCount || 0) + 1;
 
+    const activeLevels = getEpisodeLevels(activeEpisodeId);
     const levelConfig =
-      GAME_LEVELS.find((l) => l.id === progress.selectedLevel) || GAME_LEVELS[0];
+      activeLevels.find((l) => l.id === progress.selectedLevel) ||
+      GAME_LEVELS.find((l) => l.id === progress.selectedLevel) ||
+      GAME_LEVELS[0];
 
     const reward = calculateAnswerReward({
       pointsPerQuestion: levelConfig.pointsPerQuestion,
@@ -300,14 +304,10 @@ export default function App() {
 
     // Buka kartu pengetahuan sesuai sektor yang diselesaikan
     const currentCards = new Set(progress.unlockedCards || []);
-    if (progress.selectedLevel === 'jelajah') {
-      currentCards.add('e1-card-definisi');
-    } else if (progress.selectedLevel === 'peneliti') {
-      currentCards.add('e1-card-perkalian');
-      currentCards.add('e1-card-pembagian');
-    } else if (progress.selectedLevel === 'master') {
-      currentCards.add('e1-card-master');
-    }
+    const matchingCards = getEpisodeCards(activeEpisodeId).filter(
+      (c) => c.level === progress.selectedLevel
+    );
+    matchingCards.forEach((c) => currentCards.add(c.id));
 
     updateProgress({
       completed: true,
@@ -318,10 +318,15 @@ export default function App() {
     setCurrentScene('result');
   };
 
-  // 9. Finish Episode 1 in Result
+  // 9. Finish Episode in Result
   const handleFinishEpisode = () => {
     const currentCards = new Set(progress.unlockedCards || []);
-    currentCards.add('e1-card-cinta');
+    const cintaCard = getEpisodeCards(activeEpisodeId).find(
+      (c) => c.level === 'cinta'
+    );
+    if (cintaCard) {
+      currentCards.add(cintaCard.id);
+    }
     updateProgress({
       episode1Completed: true,
       unlockedCards: Array.from(currentCards),
@@ -342,8 +347,11 @@ export default function App() {
     }
   };
 
+  const activeLevels = getEpisodeLevels(activeEpisodeId);
   const currentLevelInfo =
-    GAME_LEVELS.find((l) => l.id === progress.selectedLevel) || GAME_LEVELS[0];
+    activeLevels.find((l) => l.id === progress.selectedLevel) ||
+    GAME_LEVELS.find((l) => l.id === progress.selectedLevel) ||
+    GAME_LEVELS[0];
 
   return (
     <GameLayout
@@ -406,6 +414,7 @@ export default function App() {
               progress={progress}
               timerSeconds={timerSeconds}
               lastReward={lastReward}
+              levelInfo={currentLevelInfo}
               onAnswerSubmit={handleAnswerSubmit}
               onNextQuestion={handleNextQuestion}
               onFinishLevel={handleFinishLevel}
@@ -436,6 +445,7 @@ export default function App() {
           {currentScene === 'collection' && (
             <CollectionScene
               unlockedCards={progress.unlockedCards || []}
+              activeEpisodeId={activeEpisodeId}
               onBackToMap={() => setCurrentScene('map')}
             />
           )}

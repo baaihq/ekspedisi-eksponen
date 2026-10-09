@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Lightbulb, Check, AlertCircle, ArrowRight, ArrowLeft, Info, CheckCircle2, Clock } from 'lucide-react';
-import { QuestionData, TeamProgress } from '../types/game';
+import { LevelInfo, QuestionData, TeamProgress } from '../types/game';
 import { MathView } from '../components/common/MathView';
 import { GameImage } from '../components/common/GameImage';
 import { verifyAnswer } from '../lib/normalize';
@@ -15,6 +15,7 @@ interface ChallengeSceneProps {
   progress: TeamProgress;
   timerSeconds?: number;
   lastReward?: AnswerReward | null;
+  levelInfo?: LevelInfo;
   onAnswerSubmit: (
     questionId: string,
     userAnswer: string,
@@ -35,6 +36,7 @@ export const ChallengeScene: React.FC<ChallengeSceneProps> = ({
   progress,
   timerSeconds,
   lastReward,
+  levelInfo,
   onAnswerSubmit,
   onNextQuestion,
   onFinishLevel,
@@ -46,7 +48,10 @@ export const ChallengeScene: React.FC<ChallengeSceneProps> = ({
   const isLastQuestion = currentIndex === total - 1;
 
   // Level info for points and penalty display
-  const currentLevelInfo = GAME_LEVELS.find((l) => l.id === currentQuestion.level) || GAME_LEVELS[0];
+  const currentLevelInfo =
+    levelInfo ||
+    GAME_LEVELS.find((l) => l.id === currentQuestion.level) ||
+    GAME_LEVELS[0];
   const isSectorCompleted = progress.completedLevels?.includes(currentQuestion.level);
   const wasPreviouslyCorrect = Boolean(progress.attempts[currentQuestion.id]?.isCorrect);
 

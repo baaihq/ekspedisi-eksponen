@@ -30,6 +30,7 @@ export interface LevelInfo {
   totalQuestions: number;
   pointsPerQuestion: number;
   penaltyPerWrong: number;
+  timerSeconds?: number;
 }
 
 export interface QuestionData {

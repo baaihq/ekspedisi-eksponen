@@ -1,18 +1,32 @@
 import React, { useState } from 'react';
 import { ArrowLeft, BookOpen, Lock, Sparkles, CheckCircle2 } from 'lucide-react';
-import { KnowledgeCard, EPISODE_1_CARDS } from '../data/cards';
+import { KnowledgeCard, getEpisodeCards } from '../data/cards';
+import { getEpisode } from '../data/episodes';
 import { audioManager } from '../audio/audioManager';
 
 interface CollectionSceneProps {
   unlockedCards: string[];
+  activeEpisodeId: string;
   onBackToMap: () => void;
 }
 
+const getLockedText = (card: KnowledgeCard) => {
+  if (card.level === 'cinta') {
+    return 'Tuntaskan seluruh episode ini untuk membuka.';
+  }
+  const levelName = card.level
+    ? card.level.charAt(0).toUpperCase() + card.level.slice(1)
+    : 'ini';
+  return `Selesaikan tingkat ${levelName} untuk membuka.`;
+};
+
 export const CollectionScene: React.FC<CollectionSceneProps> = ({
   unlockedCards,
+  activeEpisodeId,
   onBackToMap,
 }) => {
-  const cards = EPISODE_1_CARDS;
+  const cards = getEpisodeCards(activeEpisodeId);
+  const currentEpisode = getEpisode(activeEpisodeId);
   const [selectedCard, setSelectedCard] = useState<KnowledgeCard | null>(() => {
     const firstUnlocked = cards.find((c) => unlockedCards.includes(c.id));
     return firstUnlocked || cards[0];
@@ -34,7 +48,7 @@ export const CollectionScene: React.FC<CollectionSceneProps> = ({
                 Koleksi Kartu Pengetahuan
               </h2>
               <span className="text-xs text-slate-500 dark:text-slate-400">
-                Episode 1: Menyelamatkan Kota Data
+                Bab {currentEpisode?.episodeNumber || 1}: {currentEpisode?.title || 'Kota Data'}
               </span>
             </div>
           </div>
@@ -100,9 +114,7 @@ export const CollectionScene: React.FC<CollectionSceneProps> = ({
 
                 {!isUnlocked && (
                   <p className="mt-2 text-[11px] text-amber-700 dark:text-amber-400 italic">
-                    {card.level === 'cinta'
-                      ? 'Tuntaskan seluruh Episode 1 untuk membuka kartu ini.'
-                      : `Syarat buka: ${card.unlockedAtRule}`}
+                    {getLockedText(card)}
                   </p>
                 )}
               </div>
@@ -146,9 +158,7 @@ export const CollectionScene: React.FC<CollectionSceneProps> = ({
                   Kartu Ini Masih Terkunci
                 </h4>
                 <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
-                  {selectedCard.level === 'cinta'
-                    ? 'Tuntaskan seluruh Episode 1 untuk membuka kartu ini.'
-                    : `${selectedCard.unlockedAtRule} Kembali ke Peta Kota dan tuntaskan tantangan sektor untuk membuka kartu ini.`}
+                  {getLockedText(selectedCard)} Kembali ke Peta Kota dan tuntaskan tantangan sektor untuk membuka kartu ini.
                 </p>
               </div>
             )}
