@@ -1,0 +1,4 @@
+-- ==============================================================================
+-- PERHATIAN: File skema utama dipusatkan di `supabase/schema.sql`
+-- Silakan gunakan dan jalankan file `supabase/schema.sql` di SQL Editor Supabase Anda.
+-- ==============================================================================

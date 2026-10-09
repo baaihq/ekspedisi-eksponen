@@ -1,0 +1,43 @@
+import { LevelInfo } from '../types/game';
+
+export const GAME_LEVELS: LevelInfo[] = [
+  {
+    id: 'jelajah',
+    title: 'Jelajah Pemula',
+    subtitle: 'Konsep Dasar Perpangkatan',
+    icon: '🌱',
+    badge: 'Tingkat 1',
+    description: 'Pahami definisi bilangan berpangkat, mengubah perkalian berulang ke bentuk pangkat, dan menghitung nilai pangkat dasar.',
+    targetObjective: 'Menemukan kode pangkat dari pola perkalian berulang untuk menyalakan Generator Perkalian.',
+    estimatedMinutes: 10,
+    totalQuestions: 4,
+    pointsPerQuestion: 100,
+    penaltyPerWrong: 25,
+  },
+  {
+    id: 'peneliti',
+    title: 'Peneliti Menengah',
+    subtitle: 'Penerapan Sifat-Sifat Perpangkatan',
+    icon: '🔬',
+    badge: 'Tingkat 2',
+    description: 'Terapkan sifat perkalian basis sama, pembagian basis sama, pemangkatan bilangan berpangkat, dan operasi campuran.',
+    targetObjective: 'Mengurai transmisi multi-kabel dengan menyederhanakan sifat perpangkatan aljabar Kota Data.',
+    estimatedMinutes: 15,
+    totalQuestions: 4,
+    pointsPerQuestion: 200,
+    penaltyPerWrong: 50,
+  },
+  {
+    id: 'master',
+    title: 'Master Eksponen',
+    subtitle: 'Analisis, Konteks & Pemecahan Masalah',
+    icon: '🏆',
+    badge: 'Tingkat 3',
+    description: 'Analisis miskonsepsi umum, pecahkan teka-teki sensor transmisi kota, pertumbuhan eksponensial, dan rekonstruksi kode daya.',
+    targetObjective: 'Memulihkan Fragmen Inti Reaktor Kota Data melalui analisis pemodelan eksponensial tingkat lanjut.',
+    estimatedMinutes: 20,
+    totalQuestions: 4,
+    pointsPerQuestion: 300,
+    penaltyPerWrong: 75,
+  },
+];
