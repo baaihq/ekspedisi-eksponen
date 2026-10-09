@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { syncService } from '../services/syncService';
 import { TeacherSessionSummary, TeacherTeamSummary } from '../types/game';
+import { EPISODES } from '../data/episodes';
 import {
   isSupabaseConfigured,
   getSupabase,
@@ -71,6 +72,7 @@ export const TeacherDashboardScene: React.FC<TeacherDashboardSceneProps> = ({
 }) => {
   // Session code state (persisted)
   const [sessionCode, setSessionCode] = useState<string>(() => settingsService.getSessionCode());
+  const [dashboardEpisodeId, setDashboardEpisodeId] = useState('episode-1');
   const [dashboardData, setDashboardData] = useState<TeacherSessionSummary | null>(null);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -103,6 +105,7 @@ export const TeacherDashboardScene: React.FC<TeacherDashboardSceneProps> = ({
   });
 
   const isCloudActive = isSupabaseConfigured();
+  const currentEpisode = EPISODES.find((ep) => ep.id === dashboardEpisodeId) || EPISODES[0];
 
   // Check auth session on mount
   useEffect(() => {
@@ -120,7 +123,7 @@ export const TeacherDashboardScene: React.FC<TeacherDashboardSceneProps> = ({
           setCurrentUser(session.user);
           const prof = await authService.getProfile();
           if (mounted) setProfile(prof);
-          fetchDashboard(sessionCode);
+          fetchDashboard(sessionCode, dashboardEpisodeId);
         }
       } catch (err) {
         console.warn('Auth check error:', err);
@@ -137,7 +140,7 @@ export const TeacherDashboardScene: React.FC<TeacherDashboardSceneProps> = ({
         setCurrentUser(session.user);
         const prof = await authService.getProfile();
         setProfile(prof);
-        fetchDashboard(sessionCode);
+        fetchDashboard(sessionCode, dashboardEpisodeId);
       } else {
         setCurrentUser(null);
         setProfile(null);
@@ -148,21 +151,28 @@ export const TeacherDashboardScene: React.FC<TeacherDashboardSceneProps> = ({
       mounted = false;
       unsubscribe();
     };
-  }, [isCloudActive]);
+  }, [isCloudActive, dashboardEpisodeId]);
 
-  const fetchDashboard = async (code: string) => {
+  const fetchDashboard = async (code: string, episodeId: string = dashboardEpisodeId) => {
     if (!isCloudActive || !currentUser) return;
 
     setLoading(true);
     setErrorMessage(null);
     try {
-      const data = await syncService.getTeacherDashboardData(code);
+      const data = await syncService.getTeacherDashboardData(code, episodeId);
       setDashboardData(data);
     } catch (err: any) {
       setErrorMessage(err?.message || 'Gagal memuat data kelas dari Supabase.');
       setDashboardData(null);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleEpisodeChange = (newEpisodeId: string) => {
+    setDashboardEpisodeId(newEpisodeId);
+    if (currentUser) {
+      fetchDashboard(sessionCode, newEpisodeId);
     }
   };
 
@@ -183,7 +193,7 @@ export const TeacherDashboardScene: React.FC<TeacherDashboardSceneProps> = ({
         setCurrentUser(user);
         const prof = await authService.getProfile();
         setProfile(prof);
-        fetchDashboard(sessionCode);
+        fetchDashboard(sessionCode, dashboardEpisodeId);
       }
     } catch (err: any) {
       setLoginError(err?.message || 'Terjadi kesalahan saat masuk.');
@@ -204,7 +214,7 @@ export const TeacherDashboardScene: React.FC<TeacherDashboardSceneProps> = ({
     setSessionCode(randomCode);
     settingsService.setSessionCode(randomCode);
     if (currentUser) {
-      fetchDashboard(randomCode);
+      fetchDashboard(randomCode, dashboardEpisodeId);
     }
   };
 
@@ -751,7 +761,7 @@ on conflict (episode_number) do update
 
         {/* Kode Sesi Kelas Controller (Hanya Tampil Jika Sudah Login atau Mode Offline) */}
         {(currentUser || !isCloudActive) && (
-          <div className="mt-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 p-4 border border-slate-200 dark:border-slate-700">
+          <div className="mt-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 p-4 border border-slate-200 dark:border-slate-700">
             <div>
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                 Kode Sesi Aktif Untuk Siswa
@@ -772,15 +782,34 @@ on conflict (episode_number) do update
               </div>
             </div>
 
+            {/* Pemilih Bab (Episode) */}
+            <div className="flex flex-col">
+              <label htmlFor="dashboard-episode-select" className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                Bab
+              </label>
+              <select
+                id="dashboard-episode-select"
+                value={dashboardEpisodeId}
+                onChange={(e) => handleEpisodeChange(e.target.value)}
+                className="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-xs font-semibold text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-600 cursor-pointer"
+              >
+                {EPISODES.filter((ep) => ep.isActive).map((ep) => (
+                  <option key={ep.id} value={ep.id}>
+                    Bab {ep.episodeNumber}: {ep.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <div className="flex items-center gap-2">
               <button
                 onClick={handleGenerateNewCode}
-                className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 cursor-pointer"
+                className="flex-1 md:flex-none flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 cursor-pointer"
               >
                 <span>Buat Kode Baru</span>
               </button>
               <button
-                onClick={() => fetchDashboard(sessionCode)}
+                onClick={() => fetchDashboard(sessionCode, dashboardEpisodeId)}
                 disabled={loading}
                 className="flex items-center justify-center rounded-xl bg-slate-900 dark:bg-indigo-600 p-2 text-white hover:bg-slate-800 cursor-pointer disabled:opacity-50"
                 title="Segarkan Data"
@@ -800,7 +829,7 @@ on conflict (episode_number) do update
             <span>{errorMessage}</span>
           </div>
           <button
-            onClick={() => fetchDashboard(sessionCode)}
+            onClick={() => fetchDashboard(sessionCode, dashboardEpisodeId)}
             className="rounded-lg bg-rose-600 px-2.5 py-1 text-white font-bold text-[11px] hover:bg-rose-700 cursor-pointer shrink-0"
           >
             Coba Lagi
@@ -811,10 +840,15 @@ on conflict (episode_number) do update
       {/* Teams Overview List (Hanya Tampil Jika Sudah Login) */}
       {currentUser && (
         <div className="space-y-3">
-          <div className="flex items-center justify-between px-1">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500">
-              Kelompok Bergabung ({dashboardData?.teams.length || 0})
-            </h2>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 px-1">
+            <div>
+              <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                Kelompok Bergabung ({dashboardData?.teams.length || 0})
+              </h2>
+              <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 mt-0.5">
+                Memantau Bab {currentEpisode.episodeNumber}: {currentEpisode.title}
+              </p>
+            </div>
             <span className="text-[11px] text-slate-400">Pembaruan langsung dari Supabase</span>
           </div>
 

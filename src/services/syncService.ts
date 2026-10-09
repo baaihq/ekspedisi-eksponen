@@ -262,7 +262,7 @@ export const syncService = {
   /**
    * Gets teacher session data directly from Supabase (AUTHENTICATED ONLY, NO MOCKS)
    */
-  async getTeacherDashboardData(sessionCode: string): Promise<TeacherSessionSummary | null> {
+  async getTeacherDashboardData(sessionCode: string, episodeId: string = 'episode-1'): Promise<TeacherSessionSummary | null> {
     const supabase = getSupabase();
 
     if (!supabase || !isSupabaseConfigured()) {
@@ -300,7 +300,9 @@ export const syncService = {
           answered_at
         )
       `)
-      .eq('session_code', sessionCode);
+      .eq('session_code', sessionCode)
+      .eq('team_progress.episode_id', episodeId)
+      .eq('question_attempts.episode_id', episodeId);
 
     if (error) {
       throw new Error(`Gagal memuat data kelas dari Supabase: ${error.message}`);

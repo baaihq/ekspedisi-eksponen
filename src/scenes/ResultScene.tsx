@@ -23,7 +23,7 @@ export const ResultScene: React.FC<ResultSceneProps> = ({
     Boolean(progress.episode1Completed)
   );
 
-  const completedLevelCount = progress.completedLevels?.length || 1;
+  const completedLevelCount = progress.completedLevels?.length ?? 0;
   const isAllLevelsCompleted = completedLevelCount >= 3;
 
   // Calculate statistics
