@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Lightbulb, Check, AlertCircle, ArrowRight, ArrowLeft, Info, CheckCircle2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Lightbulb, Check, AlertCircle, ArrowRight, ArrowLeft, Info, CheckCircle2, Clock } from 'lucide-react';
 import { QuestionData, TeamProgress } from '../types/game';
 import { MathView } from '../components/common/MathView';
 import { GameImage } from '../components/common/GameImage';
@@ -7,17 +7,21 @@ import { verifyAnswer } from '../lib/normalize';
 import { formatPowerText } from '../lib/superscript';
 import { audioManager } from '../audio/audioManager';
 import { GAME_LEVELS } from '../data/levels';
+import { AnswerReward } from '../lib/scoring';
 
 interface ChallengeSceneProps {
   questions: QuestionData[];
   currentIndex: number;
   progress: TeamProgress;
+  timerSeconds?: number;
+  lastReward?: AnswerReward | null;
   onAnswerSubmit: (
     questionId: string,
     userAnswer: string,
     reason: string,
     isCorrect: boolean,
-    hintUsed: boolean
+    hintUsed: boolean,
+    elapsedSeconds?: number
   ) => void;
   onNextQuestion: () => void;
   onFinishLevel: () => void;
@@ -29,6 +33,8 @@ export const ChallengeScene: React.FC<ChallengeSceneProps> = ({
   questions,
   currentIndex,
   progress,
+  timerSeconds,
+  lastReward,
   onAnswerSubmit,
   onNextQuestion,
   onFinishLevel,
@@ -51,17 +57,30 @@ export const ChallengeScene: React.FC<ChallengeSceneProps> = ({
   const [isAnswerCorrect, setIsAnswerCorrect] = useState(false);
   const [hintNotification, setHintNotification] = useState<string | null>(null);
 
+  // Timer tracking per question
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+
   // Check if hint has already been unlocked for this question
   const isHintUnlocked = progress.unlockedHints?.includes(currentQuestion.id);
 
   // Reset or initialize state when question changes
-  React.useEffect(() => {
+  useEffect(() => {
     setUserAnswer('');
     setReason('');
     setHasChecked(false);
     setIsAnswerCorrect(false);
     setHintNotification(null);
+    setElapsedSeconds(0);
   }, [currentQuestion.id]);
+
+  // Timer interval: counts elapsedSeconds up while question is unanswered
+  useEffect(() => {
+    if (hasChecked) return;
+    const interval = setInterval(() => {
+      setElapsedSeconds((prev) => prev + 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [hasChecked, currentQuestion.id]);
 
   const handleHintClick = () => {
     if (isHintUnlocked) {
@@ -113,7 +132,8 @@ export const ChallengeScene: React.FC<ChallengeSceneProps> = ({
       userAnswer.trim(),
       reason.trim(),
       isCorrect,
-      isHintUnlocked
+      isHintUnlocked,
+      elapsedSeconds
     );
   };
 
@@ -172,6 +192,18 @@ export const ChallengeScene: React.FC<ChallengeSceneProps> = ({
               </span>
 
               <div className="flex items-center gap-2">
+                {timerSeconds !== undefined && timerSeconds > 0 && (
+                  <span
+                    className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
+                      Math.max(0, timerSeconds - elapsedSeconds) <= 10
+                        ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/80 dark:text-rose-300 animate-pulse'
+                        : 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/80 dark:text-indigo-300'
+                    }`}
+                  >
+                    <Clock className="h-3.5 w-3.5" />
+                    <span>{Math.max(0, timerSeconds - elapsedSeconds)}s</span>
+                  </span>
+                )}
                 {wasPreviouslyCorrect && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 dark:bg-emerald-950 px-2.5 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
                     <CheckCircle2 className="h-3 w-3" />
@@ -284,6 +316,10 @@ export const ChallengeScene: React.FC<ChallengeSceneProps> = ({
                       <span>
                         {wasPreviouslyCorrect
                           ? 'Poin soal ini sudah diperoleh sebelumnya — tidak ada tambahan poin/energi.'
+                          : lastReward
+                          ? `Jawaban Benar! +${lastReward.total} Poin (+${lastReward.points} dasar${
+                              lastReward.noHintBonus > 0 ? ` +${lastReward.noHintBonus} tanpa petunjuk` : ''
+                            }${lastReward.timeBonus > 0 ? ` +${lastReward.timeBonus} bonus waktu` : ''}) & +25 Energi`
                           : `Jawaban Benar! +${currentLevelInfo.pointsPerQuestion} Poin & +25 Energi`}
                       </span>
                     </>

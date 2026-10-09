@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Zap, HelpCircle, CheckCircle2, ChevronRight, Award, LogOut, AlertTriangle, Layers } from 'lucide-react';
+import { Zap, HelpCircle, CheckCircle2, ChevronRight, Award, LogOut, AlertTriangle, Layers, BookOpen } from 'lucide-react';
 import { TeamData, TeamProgress, DifficultyLevel } from '../types/game';
 import { GAME_LEVELS } from '../data/levels';
 import { EpisodeInfo } from '../data/episodes';
+import { EPISODE_1_CARDS } from '../data/cards';
 import { GameImage } from '../components/common/GameImage';
 import { audioManager } from '../audio/audioManager';
 
@@ -14,6 +15,7 @@ interface MapSceneProps {
   onSelectEpisode: (episodeId: string) => void;
   onSelectLevel: (level: DifficultyLevel) => void;
   onResetTeam: () => void;
+  onOpenCollection: () => void;
 }
 
 export const MapScene: React.FC<MapSceneProps> = ({
@@ -24,6 +26,7 @@ export const MapScene: React.FC<MapSceneProps> = ({
   onSelectEpisode,
   onSelectLevel,
   onResetTeam,
+  onOpenCollection,
 }) => {
   const [selectedLevelId, setSelectedLevelId] = useState<DifficultyLevel>(
     progress.selectedLevel || 'jelajah'
@@ -114,6 +117,20 @@ export const MapScene: React.FC<MapSceneProps> = ({
             >
               <LogOut className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Ganti Tim</span>
+            </button>
+
+            <button
+              onClick={() => {
+                audioManager.playSfx('click');
+                onOpenCollection();
+              }}
+              className="flex items-center gap-1.5 rounded-xl border border-indigo-200 dark:border-indigo-800/80 bg-indigo-50 dark:bg-indigo-950/60 px-3 py-1.5 text-[11px] font-bold text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 cursor-pointer transition shadow-xs"
+              title="Buka Koleksi Kartu Pengetahuan"
+            >
+              <BookOpen className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
+              <span>
+                Koleksi ({EPISODE_1_CARDS.filter((c) => (progress.unlockedCards || []).includes(c.id)).length}/{EPISODE_1_CARDS.length})
+              </span>
             </button>
           </div>
         </div>

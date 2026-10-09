@@ -74,6 +74,7 @@ export interface TeamProgress {
   episode1Completed: boolean;
   attempts: Record<string, QuestionAttempt>;
   unlockedHints: string[]; // questionIds where hint has been unlocked
+  unlockedCards?: string[]; // IDs of unlocked knowledge cards
 }
 
 export type SceneName =
@@ -83,7 +84,8 @@ export type SceneName =
   | 'briefing'
   | 'challenge'
   | 'result'
-  | 'teacher';
+  | 'teacher'
+  | 'collection';
 
 export interface DialogueLine {
   speaker: string;

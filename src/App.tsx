@@ -6,6 +6,7 @@ import { settingsService } from './services/settingsService';
 import { EPISODES, generateQuestionsForEpisode } from './data/episodes';
 import { GAME_LEVELS } from './data/levels';
 import { audioManager } from './audio/audioManager';
+import { calculateAnswerReward, AnswerReward } from './lib/scoring';
 
 import { GameLayout } from './layouts/GameLayout';
 import { SetupScene } from './scenes/SetupScene';
@@ -15,6 +16,7 @@ import { MissionBriefingScene } from './scenes/MissionBriefingScene';
 import { ChallengeScene } from './scenes/ChallengeScene';
 import { ResultScene } from './scenes/ResultScene';
 import { TeacherDashboardScene } from './scenes/TeacherDashboardScene';
+import { CollectionScene } from './scenes/CollectionScene';
 
 function resolveInitialEpisodeId(): string {
   const saved = settingsService.getActiveEpisode();
@@ -58,6 +60,11 @@ export default function App() {
 
   // Active question set for current selected level and episode
   const [activeQuestions, setActiveQuestions] = useState<QuestionData[]>([]);
+
+  // Optional timer mode (seconds per question)
+  const [timerSeconds, setTimerSeconds] = useState<number | undefined>(undefined);
+  // Last calculated reward for feedback display in ChallengeScene
+  const [lastReward, setLastReward] = useState<AnswerReward | null>(null);
 
   // Update active questions whenever level, episode, or team seed changes
   useEffect(() => {
@@ -199,7 +206,8 @@ export default function App() {
     userAnswer: string,
     reason: string,
     isCorrect: boolean,
-    hintUsed: boolean
+    hintUsed: boolean,
+    elapsedSeconds?: number
   ) => {
     const existingAttempt = progress.attempts[questionId];
     const alreadyCorrect = Boolean(existingAttempt?.isCorrect);
@@ -207,6 +215,17 @@ export default function App() {
 
     const levelConfig =
       GAME_LEVELS.find((l) => l.id === progress.selectedLevel) || GAME_LEVELS[0];
+
+    const reward = calculateAnswerReward({
+      pointsPerQuestion: levelConfig.pointsPerQuestion,
+      penaltyPerWrong: levelConfig.penaltyPerWrong,
+      timerSeconds,
+      isCorrect,
+      alreadyCorrect,
+      hintUsed,
+      elapsedSeconds,
+    });
+    setLastReward(reward);
 
     const newAttempt = {
       questionId,
@@ -224,12 +243,12 @@ export default function App() {
 
     if (isCorrect) {
       if (!alreadyCorrect) {
-        newScore = progress.score + levelConfig.pointsPerQuestion;
+        newScore = progress.score + reward.total;
         newEnergy = progress.energyTokens + 25;
       }
     } else {
       if (!alreadyCorrect) {
-        newScore = Math.max(0, progress.score - levelConfig.penaltyPerWrong);
+        newScore = Math.max(0, progress.score + reward.total); // reward.total is -penaltyPerWrong
       }
     }
 
@@ -266,20 +285,34 @@ export default function App() {
 
   // 7. Next Question in Challenge
   const handleNextQuestion = () => {
+    setLastReward(null);
     const nextIdx = progress.currentQuestionIndex + 1;
     updateProgress({ currentQuestionIndex: nextIdx });
   };
 
-  // 8. Finish Level -> Go to Result
+  // 8. Finish Level -> Go to Result & Buka Kartu Koleksi
   const handleFinishLevel = () => {
+    setLastReward(null);
     const alreadyCompleted = progress.completedLevels?.includes(progress.selectedLevel);
     const newCompletedLevels = alreadyCompleted
       ? progress.completedLevels
       : [...(progress.completedLevels || []), progress.selectedLevel];
 
+    // Buka kartu pengetahuan sesuai sektor yang diselesaikan
+    const currentCards = new Set(progress.unlockedCards || []);
+    if (progress.selectedLevel === 'jelajah') {
+      currentCards.add('e1-card-definisi');
+    } else if (progress.selectedLevel === 'peneliti') {
+      currentCards.add('e1-card-perkalian');
+      currentCards.add('e1-card-pembagian');
+    } else if (progress.selectedLevel === 'master') {
+      currentCards.add('e1-card-master');
+    }
+
     updateProgress({
       completed: true,
       completedLevels: newCompletedLevels,
+      unlockedCards: Array.from(currentCards),
     });
 
     setCurrentScene('result');
@@ -344,6 +377,7 @@ export default function App() {
               onSelectEpisode={handleSelectEpisode}
               onSelectLevel={handleSelectLevel}
               onResetTeam={handleResetTeam}
+              onOpenCollection={() => setCurrentScene('collection')}
             />
           )}
 
@@ -352,6 +386,8 @@ export default function App() {
             <MissionBriefingScene
               levelInfo={currentLevelInfo}
               progress={progress}
+              timerSeconds={timerSeconds}
+              onSelectTimer={setTimerSeconds}
               onStartMission={handleStartMission}
               onBackToMap={handleBackToMap}
             />
@@ -363,6 +399,8 @@ export default function App() {
               questions={activeQuestions}
               currentIndex={progress.currentQuestionIndex}
               progress={progress}
+              timerSeconds={timerSeconds}
+              lastReward={lastReward}
               onAnswerSubmit={handleAnswerSubmit}
               onNextQuestion={handleNextQuestion}
               onFinishLevel={handleFinishLevel}
@@ -386,6 +424,14 @@ export default function App() {
           {currentScene === 'teacher' && (
             <TeacherDashboardScene
               onBackToGame={() => setCurrentScene(team ? 'map' : 'setup')}
+            />
+          )}
+
+          {/* SCENE 8: KOLEKSI KARTU */}
+          {currentScene === 'collection' && (
+            <CollectionScene
+              unlockedCards={progress.unlockedCards || []}
+              onBackToMap={() => setCurrentScene('map')}
             />
           )}
         </motion.div>

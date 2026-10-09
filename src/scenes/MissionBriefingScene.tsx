@@ -7,6 +7,8 @@ import { audioManager } from '../audio/audioManager';
 interface MissionBriefingSceneProps {
   levelInfo: LevelInfo;
   progress: TeamProgress;
+  timerSeconds?: number;
+  onSelectTimer?: (seconds: number | undefined) => void;
   onStartMission: () => void;
   onBackToMap: () => void;
 }
@@ -14,6 +16,8 @@ interface MissionBriefingSceneProps {
 export const MissionBriefingScene: React.FC<MissionBriefingSceneProps> = ({
   levelInfo,
   progress,
+  timerSeconds,
+  onSelectTimer,
   onStartMission,
   onBackToMap,
 }) => {
@@ -94,6 +98,45 @@ export const MissionBriefingScene: React.FC<MissionBriefingSceneProps> = ({
                 {progress.hintTokens} Token
               </div>
               <span className="text-[10px] text-slate-400">Tersedia</span>
+            </div>
+          </div>
+
+          {/* Mode Waktu (Opsional) */}
+          <div className="mb-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                Mode Waktu (Opsional)
+              </span>
+              <span className="text-[10px] text-slate-400">
+                Bonus skor +15% jika menjawab cepat
+              </span>
+            </div>
+            <div className="grid grid-cols-4 gap-2">
+              {[
+                { label: 'Bebas', sec: undefined },
+                { label: '60 dtk', sec: 60 },
+                { label: '90 dtk', sec: 90 },
+                { label: '120 dtk', sec: 120 },
+              ].map((opt) => {
+                const isSelected = timerSeconds === opt.sec;
+                return (
+                  <button
+                    key={opt.label}
+                    type="button"
+                    onClick={() => {
+                      audioManager.playSfx('click');
+                      onSelectTimer?.(opt.sec);
+                    }}
+                    className={`py-2 px-1 rounded-xl text-xs font-bold transition cursor-pointer border ${
+                      isSelected
+                        ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 ring-2 ring-indigo-500/20'
+                        : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 hover:border-slate-300'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                );
+              })}
             </div>
           </div>
 

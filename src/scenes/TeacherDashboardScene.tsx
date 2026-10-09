@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   ArrowLeft,
   RefreshCw,
@@ -77,6 +77,11 @@ export const TeacherDashboardScene: React.FC<TeacherDashboardSceneProps> = ({
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // Auto-refresh state
+  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const isFetchingRef = useRef(false);
+
   // Authentication state
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [currentUser, setCurrentUser] = useState<any | null>(null);
@@ -153,21 +158,60 @@ export const TeacherDashboardScene: React.FC<TeacherDashboardSceneProps> = ({
     };
   }, [isCloudActive, dashboardEpisodeId]);
 
-  const fetchDashboard = async (code: string, episodeId: string = dashboardEpisodeId) => {
+  const fetchDashboard = async (
+    code: string,
+    episodeId: string = dashboardEpisodeId,
+    isBackground: boolean = false
+  ) => {
     if (!isCloudActive || !currentUser) return;
+    if (isFetchingRef.current) return;
 
-    setLoading(true);
-    setErrorMessage(null);
+    isFetchingRef.current = true;
+    if (!isBackground) {
+      setLoading(true);
+      setErrorMessage(null);
+    }
     try {
       const data = await syncService.getTeacherDashboardData(code, episodeId);
       setDashboardData(data);
+      setLastUpdated(new Date());
     } catch (err: any) {
-      setErrorMessage(err?.message || 'Gagal memuat data kelas dari Supabase.');
-      setDashboardData(null);
+      if (!isBackground) {
+        setErrorMessage(err?.message || 'Gagal memuat data kelas dari Supabase.');
+        setDashboardData(null);
+      }
     } finally {
-      setLoading(false);
+      if (!isBackground) {
+        setLoading(false);
+      }
+      isFetchingRef.current = false;
     }
   };
+
+  // Polling setiap 15 detik dengan penanganan visibilitas tab
+  useEffect(() => {
+    if (!isCloudActive || !currentUser || !autoRefresh) {
+      return;
+    }
+
+    const intervalId = window.setInterval(() => {
+      if (document.hidden) return;
+      fetchDashboard(sessionCode, dashboardEpisodeId, true);
+    }, 15000);
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden && autoRefresh) {
+        fetchDashboard(sessionCode, dashboardEpisodeId, true);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [isCloudActive, currentUser, sessionCode, dashboardEpisodeId, autoRefresh]);
 
   const handleEpisodeChange = (newEpisodeId: string) => {
     setDashboardEpisodeId(newEpisodeId);
@@ -840,7 +884,7 @@ on conflict (episode_number) do update
       {/* Teams Overview List (Hanya Tampil Jika Sudah Login) */}
       {currentUser && (
         <div className="space-y-3">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 px-1">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
             <div>
               <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500">
                 Kelompok Bergabung ({dashboardData?.teams.length || 0})
@@ -849,7 +893,30 @@ on conflict (episode_number) do update
                 Memantau Bab {currentEpisode.episodeNumber}: {currentEpisode.title}
               </p>
             </div>
-            <span className="text-[11px] text-slate-400">Pembaruan langsung dari Supabase</span>
+            <div className="flex items-center gap-2.5">
+              {lastUpdated && (
+                <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                  {lastUpdated.toLocaleTimeString('id-ID')}
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={() => setAutoRefresh((prev) => !prev)}
+                className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold border transition-colors cursor-pointer ${
+                  autoRefresh
+                    ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-300 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300'
+                    : 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400'
+                }`}
+                title="Alihkan mode pembaruan otomatis (15 detik)"
+              >
+                <span
+                  className={`h-2 w-2 rounded-full ${
+                    autoRefresh ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'
+                  }`}
+                />
+                <span>{autoRefresh ? 'Otomatis 15s' : 'Manual'}</span>
+              </button>
+            </div>
           </div>
 
           {dashboardData?.teams && dashboardData.teams.length > 0 ? (
