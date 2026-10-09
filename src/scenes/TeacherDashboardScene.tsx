@@ -805,37 +805,38 @@ on conflict (episode_number) do update
 
         {/* Kode Sesi Kelas Controller (Hanya Tampil Jika Sudah Login atau Mode Offline) */}
         {(currentUser || !isCloudActive) && (
-          <div className="mt-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 p-4 border border-slate-200 dark:border-slate-700">
-            <div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                Kode Sesi Aktif Untuk Siswa
+          <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/60">
+            <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 whitespace-nowrap">
+              Kode Sesi Aktif untuk Siswa
+            </span>
+
+            <div className="mt-2 flex flex-wrap items-center gap-2 min-w-0">
+              <KeyRound className="h-5 w-5 shrink-0 text-indigo-500" />
+              <span className="whitespace-nowrap font-mono text-xl font-black tracking-wide text-indigo-600 dark:text-indigo-400 sm:text-2xl select-all">
+                {sessionCode}
               </span>
-              <div className="flex items-center gap-2 mt-1">
-                <KeyRound className="h-5 w-5 text-indigo-500" />
-                <span className="text-xl sm:text-2xl font-black tracking-widest font-mono text-indigo-600 dark:text-indigo-400 select-all">
-                  {sessionCode}
-                </span>
-                <button
-                  onClick={handleCopyCode}
-                  className="flex items-center gap-1 rounded-lg border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950/60 px-2 py-1 text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 cursor-pointer ml-1"
-                  title="Salin Kode Sesi"
-                >
-                  {copiedCode ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                  <span>{copiedCode ? 'Tersalin' : 'Salin'}</span>
-                </button>
-              </div>
+              <button
+                onClick={handleCopyCode}
+                className="ml-auto shrink-0 flex items-center gap-1 rounded-lg border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950/60 px-2.5 py-1 text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 cursor-pointer"
+                title="Salin Kode Sesi"
+              >
+                {copiedCode ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                <span>{copiedCode ? 'Tersalin!' : 'Salin'}</span>
+              </button>
             </div>
 
-            {/* Pemilih Bab (Episode) */}
-            <div className="flex flex-col">
-              <label htmlFor="dashboard-episode-select" className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+            <div className="mt-3">
+              <label
+                htmlFor="dashboard-episode-select"
+                className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-400"
+              >
                 Bab
               </label>
               <select
                 id="dashboard-episode-select"
                 value={dashboardEpisodeId}
                 onChange={(e) => handleEpisodeChange(e.target.value)}
-                className="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-xs font-semibold text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-600 cursor-pointer"
+                className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-xs font-semibold text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-600 cursor-pointer"
               >
                 {EPISODES.filter((ep) => ep.isActive).map((ep) => (
                   <option key={ep.id} value={ep.id}>
@@ -845,17 +846,17 @@ on conflict (episode_number) do update
               </select>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="mt-3 flex items-center gap-2">
               <button
                 onClick={handleGenerateNewCode}
-                className="flex-1 md:flex-none flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 cursor-pointer"
+                className="flex-1 flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer"
               >
                 <span>Buat Kode Baru</span>
               </button>
               <button
                 onClick={() => fetchDashboard(sessionCode, dashboardEpisodeId)}
                 disabled={loading}
-                className="flex items-center justify-center rounded-xl bg-slate-900 dark:bg-indigo-600 p-2 text-white hover:bg-slate-800 cursor-pointer disabled:opacity-50"
+                className="shrink-0 flex items-center justify-center rounded-xl bg-slate-900 dark:bg-indigo-600 p-2 text-white hover:bg-slate-800 dark:hover:bg-indigo-500 cursor-pointer disabled:opacity-50"
                 title="Segarkan Data"
               >
                 <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />

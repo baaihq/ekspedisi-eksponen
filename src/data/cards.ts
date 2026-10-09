@@ -1,6 +1,8 @@
 export interface KnowledgeCard {
   id: string;
   episodeId: string;
+  level?: string;
+  emoji?: string;
   title: string;
   subtitle: string;
   topic: string;
@@ -13,6 +15,7 @@ export const EPISODE_1_CARDS: KnowledgeCard[] = [
   {
     id: 'e1-card-definisi',
     episodeId: 'episode-1',
+    level: 'jelajah',
     title: 'Kartu Konsep: Fondasi Eksponen',
     subtitle: 'Definisi Perkalian Berulang',
     topic: 'Definisi aⁿ',
@@ -24,6 +27,7 @@ export const EPISODE_1_CARDS: KnowledgeCard[] = [
   {
     id: 'e1-card-perkalian',
     episodeId: 'episode-1',
+    level: 'peneliti',
     title: 'Kartu Sifat: Arus Perkalian',
     subtitle: 'Perkalian Basis Sama',
     topic: 'Sifat aᵐ × aⁿ',
@@ -35,6 +39,7 @@ export const EPISODE_1_CARDS: KnowledgeCard[] = [
   {
     id: 'e1-card-pembagian',
     episodeId: 'episode-1',
+    level: 'peneliti',
     title: 'Kartu Sifat: Aliran Pembagian',
     subtitle: 'Pembagian Basis Sama',
     topic: 'Sifat aᵐ / aⁿ',
@@ -46,6 +51,7 @@ export const EPISODE_1_CARDS: KnowledgeCard[] = [
   {
     id: 'e1-card-master',
     episodeId: 'episode-1',
+    level: 'master',
     title: 'Kartu Master: Inti Reaktor Eksponen',
     subtitle: 'Pemangkatan Bilangan Berpangkat & Sifat Campuran',
     topic: 'Sifat (aᵐ)ⁿ dan Penerapan',
@@ -53,5 +59,18 @@ export const EPISODE_1_CARDS: KnowledgeCard[] = [
       'Bila bilangan berpangkat dipangkatkan lagi, kalikan pangkatnya: (aᵐ)ⁿ = aᵐˣⁿ. Kombinasikan seluruh sifat perpangkatan untuk menyelesaikan analisis daya tingkat lanjut.',
     example: 'Contoh: (2³)² = 2³ˣ² = 2⁶ = 64.',
     unlockedAtRule: 'Selesaikan sektor Master Eksponen.',
+  },
+  {
+    id: 'e1-card-cinta',
+    episodeId: 'episode-1',
+    level: 'cinta',
+    emoji: '🕋',
+    title: 'Syukur atas Keteraturan',
+    subtitle: 'Refleksi Nilai Kehidupan',
+    topic: 'Hikmah & Nilai Karakter',
+    content:
+      'QS. Al-Baqarah 261 menggambarkan pelipatgandaan pahala hingga 7 × 10² kali. Keteraturan pola inilah yang kita pelajari sebagai perpangkatan. Bagikan pemahamanmu kepada teman sebagai sedekah ilmu.',
+    example: 'Kebaikan berlipat ganda: 1 butir benih menumbuhkan 7 tangkai, pada tiap tangkai ada 100 biji (7 × 10²).',
+    unlockedAtRule: 'Tuntaskan seluruh Episode 1 untuk membuka kartu ini.',
   },
 ];

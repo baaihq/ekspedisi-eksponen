@@ -66,9 +66,18 @@ export const CollectionScene: React.FC<CollectionSceneProps> = ({
                 } ${!isUnlocked ? 'opacity-75' : ''}`}
               >
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
-                    {card.topic}
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    {card.emoji && <span className="text-sm">{card.emoji}</span>}
+                    <span
+                      className={`text-[10px] font-bold uppercase tracking-wider ${
+                        card.level === 'cinta'
+                          ? 'text-emerald-600 dark:text-emerald-400'
+                          : 'text-indigo-600 dark:text-indigo-400'
+                      }`}
+                    >
+                      {card.topic}
+                    </span>
+                  </div>
                   {isUnlocked ? (
                     <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 dark:bg-emerald-950 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
                       <CheckCircle2 className="h-3 w-3" />
@@ -91,7 +100,9 @@ export const CollectionScene: React.FC<CollectionSceneProps> = ({
 
                 {!isUnlocked && (
                   <p className="mt-2 text-[11px] text-amber-700 dark:text-amber-400 italic">
-                    Syarat buka: {card.unlockedAtRule}
+                    {card.level === 'cinta'
+                      ? 'Tuntaskan seluruh Episode 1 untuk membuka kartu ini.'
+                      : `Syarat buka: ${card.unlockedAtRule}`}
                   </p>
                 )}
               </div>
@@ -135,7 +146,9 @@ export const CollectionScene: React.FC<CollectionSceneProps> = ({
                   Kartu Ini Masih Terkunci
                 </h4>
                 <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
-                  {selectedCard.unlockedAtRule} Kembali ke Peta Kota dan tuntaskan tantangan sektor untuk membuka kartu ini.
+                  {selectedCard.level === 'cinta'
+                    ? 'Tuntaskan seluruh Episode 1 untuk membuka kartu ini.'
+                    : `${selectedCard.unlockedAtRule} Kembali ke Peta Kota dan tuntaskan tantangan sektor untuk membuka kartu ini.`}
                 </p>
               </div>
             )}

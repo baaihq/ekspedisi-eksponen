@@ -320,7 +320,12 @@ export default function App() {
 
   // 9. Finish Episode 1 in Result
   const handleFinishEpisode = () => {
-    updateProgress({ episode1Completed: true });
+    const currentCards = new Set(progress.unlockedCards || []);
+    currentCards.add('e1-card-cinta');
+    updateProgress({
+      episode1Completed: true,
+      unlockedCards: Array.from(currentCards),
+    });
   };
 
   // 10. Back to Map

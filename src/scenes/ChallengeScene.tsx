@@ -75,12 +75,17 @@ export const ChallengeScene: React.FC<ChallengeSceneProps> = ({
 
   // Timer interval: counts elapsedSeconds up while question is unanswered
   useEffect(() => {
-    if (hasChecked) return;
+    if (hasChecked && isAnswerCorrect) return;
     const interval = setInterval(() => {
-      setElapsedSeconds((prev) => prev + 1);
+      setElapsedSeconds((prev) => {
+        if (timerSeconds !== undefined && timerSeconds > 0 && prev >= timerSeconds) {
+          return timerSeconds;
+        }
+        return prev + 1;
+      });
     }, 1000);
     return () => clearInterval(interval);
-  }, [hasChecked, currentQuestion.id]);
+  }, [hasChecked, isAnswerCorrect, timerSeconds, currentQuestion.id]);
 
   const handleHintClick = () => {
     if (isHintUnlocked) {
@@ -223,6 +228,17 @@ export const ChallengeScene: React.FC<ChallengeSceneProps> = ({
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
+
+            {/* Keterangan Waktu Habis */}
+            {timerSeconds !== undefined &&
+              timerSeconds > 0 &&
+              elapsedSeconds >= timerSeconds &&
+              !(hasChecked && isAnswerCorrect) && (
+                <div className="mt-3 flex items-center gap-2 rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-800 px-3 py-2 text-xs font-bold text-amber-800 dark:text-amber-200">
+                  <Clock className="h-4 w-4 text-amber-600 shrink-0" />
+                  <span>Waktu habis — bonus waktu hangus</span>
+                </div>
+              )}
           </div>
 
           {/* Title & Instruction (Bebas bocoran LaTeX) */}

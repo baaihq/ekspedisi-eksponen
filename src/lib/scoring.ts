@@ -46,7 +46,7 @@ export function calculateAnswerReward(params: {
 
   // 3. Jawaban benar
   const points = pointsPerQuestion;
-  const noHintBonus = hintUsed ? 0 : Math.round(pointsPerQuestion * 0.2);
+  const noHintBonus = hintUsed ? 0 : Math.round(pointsPerQuestion * 0.25);
 
   let timeBonus = 0;
   if (
@@ -55,9 +55,12 @@ export function calculateAnswerReward(params: {
     elapsedSeconds !== undefined &&
     elapsedSeconds >= 0
   ) {
-    const fractionRemaining = (timerSeconds - elapsedSeconds) / timerSeconds;
-    if (fractionRemaining > 0.5) {
-      timeBonus = Math.round(pointsPerQuestion * 0.15);
+    if (elapsedSeconds <= timerSeconds / 2) {
+      timeBonus = Math.round(pointsPerQuestion * 0.20);
+    } else if (elapsedSeconds <= timerSeconds) {
+      timeBonus = Math.round(pointsPerQuestion * 0.10);
+    } else {
+      timeBonus = 0;
     }
   }
 

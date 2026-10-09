@@ -3,6 +3,7 @@ import { GAME_LEVELS } from '../src/data/levels';
 import { createGroupSeed } from '../src/lib/seed';
 import { verifyAnswer, normalizeMathAnswer } from '../src/lib/normalize';
 import { formatPowerText } from '../src/lib/superscript';
+import { calculateAnswerReward } from '../src/lib/scoring';
 import { DifficultyLevel, QuestionData } from '../src/types/game';
 
 const TEAM_NAMES = [
@@ -476,6 +477,127 @@ async function runCheck() {
   }
 
   console.log('✅ Semua uji format jawaban lolos dengan sukses!');
+
+  // =========================================================================
+  // B. Uji Bonus
+  // =========================================================================
+  console.log('\n🧪 Menjalankan Uji Bonus...');
+  console.log('----------------------------------------------------');
+
+  const bonusTestCases = [
+    {
+      name: 'Master (300/75/90), benar, tanpa petunjuk, 30 detik',
+      params: {
+        pointsPerQuestion: 300,
+        penaltyPerWrong: 75,
+        timerSeconds: 90,
+        isCorrect: true,
+        alreadyCorrect: false,
+        hintUsed: false,
+        elapsedSeconds: 30,
+      },
+      expected: { points: 300, noHintBonus: 75, timeBonus: 60, total: 435 },
+    },
+    {
+      name: 'Master, benar, pakai petunjuk, 60 detik',
+      params: {
+        pointsPerQuestion: 300,
+        penaltyPerWrong: 75,
+        timerSeconds: 90,
+        isCorrect: true,
+        alreadyCorrect: false,
+        hintUsed: true,
+        elapsedSeconds: 60,
+      },
+      expected: { points: 300, noHintBonus: 0, timeBonus: 30, total: 330 },
+    },
+    {
+      name: 'Master, benar, tanpa petunjuk, 95 detik',
+      params: {
+        pointsPerQuestion: 300,
+        penaltyPerWrong: 75,
+        timerSeconds: 90,
+        isCorrect: true,
+        alreadyCorrect: false,
+        hintUsed: false,
+        elapsedSeconds: 95,
+      },
+      expected: { points: 300, noHintBonus: 75, timeBonus: 0, total: 375 },
+    },
+    {
+      name: 'Jelajah (100/25, tanpa timer), benar, tanpa petunjuk',
+      params: {
+        pointsPerQuestion: 100,
+        penaltyPerWrong: 25,
+        timerSeconds: undefined,
+        isCorrect: true,
+        alreadyCorrect: false,
+        hintUsed: false,
+        elapsedSeconds: undefined,
+      },
+      expected: { points: 100, noHintBonus: 25, timeBonus: 0, total: 125 },
+    },
+    {
+      name: 'Master, jawaban salah',
+      params: {
+        pointsPerQuestion: 300,
+        penaltyPerWrong: 75,
+        timerSeconds: 90,
+        isCorrect: false,
+        alreadyCorrect: false,
+        hintUsed: false,
+        elapsedSeconds: 30,
+      },
+      expected: { points: -75, noHintBonus: 0, timeBonus: 0, total: -75 },
+    },
+    {
+      name: 'Master, mengulang soal yang sudah benar',
+      params: {
+        pointsPerQuestion: 300,
+        penaltyPerWrong: 75,
+        timerSeconds: 90,
+        isCorrect: true,
+        alreadyCorrect: true,
+        hintUsed: false,
+        elapsedSeconds: 30,
+      },
+      expected: { points: 0, noHintBonus: 0, timeBonus: 0, total: 0 },
+    },
+  ];
+
+  let bonusFailed = 0;
+  for (const tc of bonusTestCases) {
+    const res = calculateAnswerReward(tc.params);
+    const passed =
+      res.points === tc.expected.points &&
+      res.noHintBonus === tc.expected.noHintBonus &&
+      res.timeBonus === tc.expected.timeBonus &&
+      res.total === tc.expected.total;
+
+    if (passed) {
+      console.log(
+        `  ✓ [LULUS] ${tc.name} -> points: ${res.points}, noHintBonus: ${res.noHintBonus}, timeBonus: ${res.timeBonus}, total: ${res.total}`
+      );
+    } else {
+      bonusFailed++;
+      console.error(
+        `  ✗ [GAGAL] ${tc.name} -> didapat: ${JSON.stringify(res)}, diharapkan: ${JSON.stringify(
+          tc.expected
+        )}`
+      );
+    }
+  }
+
+  console.log(`\n📊 Ringkasan Uji Bonus:`);
+  console.log(`- Total kasus uji : ${bonusTestCases.length}`);
+  console.log(`- Kasus gagal     : ${bonusFailed}`);
+
+  if (bonusFailed > 0) {
+    console.error(`\n❌ Ada ${bonusFailed} kasus uji bonus yang gagal.`);
+    process.exit(1);
+  }
+
+  console.log('✅ Semua uji bonus lolos dengan sukses!');
   process.exit(0);
 }
 
