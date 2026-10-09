@@ -43,6 +43,8 @@ export interface QuestionData {
   acceptableAnswers: string[];
   expectedExponentForm?: string;
   expectedNumericValue?: number | string;
+  /** Set true hanya untuk soal yang memang menuntut kesetaraan bentuk (mis. sederhanakan √50 = 5√2). Default false agar menjawab dengan nilai polos tidak diterima. */
+  allowNumericEquivalent?: boolean;
   hint: string;
   explanation: string;
   diagramSvgKey?: string;

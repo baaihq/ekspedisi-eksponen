@@ -95,7 +95,8 @@ export const ChallengeScene: React.FC<ChallengeSceneProps> = ({
     const { isCorrect } = verifyAnswer(
       userAnswer,
       currentQuestion.acceptableAnswers,
-      currentQuestion.expectedNumericValue
+      currentQuestion.expectedNumericValue,
+      { allowNumericEquivalent: currentQuestion.allowNumericEquivalent }
     );
 
     setHasChecked(true);

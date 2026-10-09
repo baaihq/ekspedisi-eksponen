@@ -98,7 +98,12 @@ async function runCheck() {
         // (a) Setiap acceptableAnswers lolos verifyAnswer terhadap dirinya sendiri
         if (Array.isArray(q.acceptableAnswers)) {
           for (const ans of q.acceptableAnswers) {
-            const verification = verifyAnswer(ans, q.acceptableAnswers, q.expectedNumericValue);
+            const verification = verifyAnswer(
+              ans,
+              q.acceptableAnswers,
+              q.expectedNumericValue,
+              { allowNumericEquivalent: q.allowNumericEquivalent }
+            );
             if (!verification.isCorrect) {
               problems.push({
                 level,
@@ -119,7 +124,12 @@ async function runCheck() {
           q.expectedNumericValue !== ''
         ) {
           const numStr = String(q.expectedNumericValue);
-          const verification = verifyAnswer(numStr, q.acceptableAnswers, q.expectedNumericValue);
+          const verification = verifyAnswer(
+            numStr,
+            q.acceptableAnswers,
+            q.expectedNumericValue,
+            { allowNumericEquivalent: q.allowNumericEquivalent }
+          );
           if (!verification.isCorrect) {
             problems.push({
               level,
@@ -151,7 +161,12 @@ async function runCheck() {
         }
 
         // (d) Jawaban "zzzz" tidak lolos (uji negatif)
-        const negativeVerification = verifyAnswer('zzzz', q.acceptableAnswers, q.expectedNumericValue);
+        const negativeVerification = verifyAnswer(
+          'zzzz',
+          q.acceptableAnswers,
+          q.expectedNumericValue,
+          { allowNumericEquivalent: q.allowNumericEquivalent }
+        );
         if (negativeVerification.isCorrect) {
           problems.push({
             level,
@@ -240,6 +255,7 @@ async function runCheck() {
     userAnswer: string;
     acceptableAnswers: string[];
     expectedNumericValue?: number | string;
+    options?: { allowNumericEquivalent?: boolean };
     shouldPass: boolean;
   }
 
@@ -343,39 +359,76 @@ async function runCheck() {
       shouldPass: true,
     },
 
-    // 5. Bentuk Akar
+    // 5. Bentuk Akar dengan allowNumericEquivalent: true
     {
-      name: 'Bentuk akar tunggal (√50)',
+      name: 'Bentuk akar tunggal (√50 = 5√2 dengan allowNumericEquivalent)',
       userAnswer: '√50',
       acceptableAnswers: ['5√2'],
+      options: { allowNumericEquivalent: true },
       shouldPass: true,
     },
     {
-      name: 'Bentuk akar perkalian implisit (5√2)',
+      name: 'Bentuk akar perkalian implisit (5√2 = √50 dengan allowNumericEquivalent)',
       userAnswer: '5√2',
       acceptableAnswers: ['√50'],
+      options: { allowNumericEquivalent: true },
       shouldPass: true,
     },
     {
-      name: 'Bentuk akar pembagian (√2/2)',
+      name: 'Bentuk akar pembagian (√2/2 = 1/√2 dengan allowNumericEquivalent)',
       userAnswer: '√2/2',
       acceptableAnswers: ['1/√2'],
+      options: { allowNumericEquivalent: true },
       shouldPass: true,
     },
     {
-      name: 'Bentuk akar perkalian (2√3 = √12)',
+      name: 'Bentuk akar perkalian (2√3 = √12 dengan allowNumericEquivalent)',
       userAnswer: '2√3',
       acceptableAnswers: ['√12'],
+      options: { allowNumericEquivalent: true },
       shouldPass: true,
     },
     {
-      name: 'Bentuk akar penjumlahan (√5+√3 = √3+√5)',
+      name: 'Bentuk akar penjumlahan (√5+√3 = √3+√5 dengan allowNumericEquivalent)',
       userAnswer: '√5+√3',
       acceptableAnswers: ['√3+√5'],
+      options: { allowNumericEquivalent: true },
       shouldPass: true,
     },
 
-    // 6. Uji Negatif
+    // 6. Pembatasan Kesetaraan Numerik (HARUS FALSE jika allowNumericEquivalent tidak aktif)
+    {
+      name: 'Bentuk akar tanpa allowNumericEquivalent (√50 vs 5√2 harus false)',
+      userAnswer: '√50',
+      acceptableAnswers: ['5√2'],
+      shouldPass: false,
+    },
+    {
+      name: 'Nilai polos "32" untuk bentuk pangkat ["2^5","2^{5}","2 pangkat 5"] (harus false)',
+      userAnswer: '32',
+      acceptableAnswers: ['2^5', '2^{5}', '2 pangkat 5'],
+      shouldPass: false,
+    },
+    {
+      name: 'Nilai polos "8" untuk perkalian berulang ["2 * 2 * 2","2 x 2 x 2"] (harus false)',
+      userAnswer: '8',
+      acceptableAnswers: ['2 * 2 * 2', '2 x 2 x 2'],
+      shouldPass: false,
+    },
+    {
+      name: 'Nilai polos "64" untuk bentuk pangkat ["2^6","4^3"] (harus false)',
+      userAnswer: '64',
+      acceptableAnswers: ['2^6', '4^3'],
+      shouldPass: false,
+    },
+    {
+      name: 'Nilai polos "3125" untuk bentuk pangkat ["5^5","5^{5}","5 pangkat 5"] (harus false)',
+      userAnswer: '3125',
+      acceptableAnswers: ['5^5', '5^{5}', '5 pangkat 5'],
+      shouldPass: false,
+    },
+
+    // 7. Uji Negatif & Sanitasi
     {
       name: 'Uji negatif (jawaban acak zzzz)',
       userAnswer: 'zzzz',
@@ -401,7 +454,7 @@ async function runCheck() {
 
   let formatFailed = 0;
   for (const tc of formatTestCases) {
-    const res = verifyAnswer(tc.userAnswer, tc.acceptableAnswers, tc.expectedNumericValue);
+    const res = verifyAnswer(tc.userAnswer, tc.acceptableAnswers, tc.expectedNumericValue, tc.options);
     const passed = res.isCorrect === tc.shouldPass;
     if (passed) {
       console.log(`  ✓ [LULUS] ${tc.name} -> isCorrect: ${res.isCorrect}`);

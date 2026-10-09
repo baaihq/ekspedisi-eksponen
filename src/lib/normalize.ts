@@ -409,7 +409,8 @@ function isNumClose(a: number, b: number): boolean {
 export function verifyAnswer(
   userAnswer: string,
   acceptableAnswers: string[],
-  expectedNumericValue?: number | string
+  expectedNumericValue?: number | string,
+  options?: { allowNumericEquivalent?: boolean }
 ): { isCorrect: boolean; matchedForm?: string } {
   // 1. Direct text matching as currently implemented (JANGAN DIUBAH)
   const normalizedUser = normalizeMathAnswer(userAnswer);
@@ -463,7 +464,8 @@ export function verifyAnswer(
   }
 
   // 3. If both sides can be parsed into numbers, compare user numeric candidates with each acceptableAnswer
-  if (userCandidates.length > 0) {
+  // HANYA berjalan bila options?.allowNumericEquivalent === true
+  if (options?.allowNumericEquivalent === true && userCandidates.length > 0) {
     for (const acceptable of acceptableAnswers) {
       const acceptableCandidates = parseNumericCandidates(acceptable);
       for (const uVal of userCandidates) {
