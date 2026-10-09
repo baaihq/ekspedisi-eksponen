@@ -53,13 +53,14 @@ export const ChallengeScene: React.FC<ChallengeSceneProps> = ({
     GAME_LEVELS.find((l) => l.id === currentQuestion.level) ||
     GAME_LEVELS[0];
   const isSectorCompleted = progress.completedLevels?.includes(currentQuestion.level);
-  const wasPreviouslyCorrect = Boolean(progress.attempts[currentQuestion.id]?.isCorrect);
+  const isQuestionAlreadyCorrect = Boolean(progress.attempts[currentQuestion.id]?.isCorrect);
 
   // Local form state
   const [userAnswer, setUserAnswer] = useState('');
   const [reason, setReason] = useState('');
   const [hasChecked, setHasChecked] = useState(false);
   const [isAnswerCorrect, setIsAnswerCorrect] = useState(false);
+  const [wasCorrectBeforeSubmit, setWasCorrectBeforeSubmit] = useState(false);
   const [hintNotification, setHintNotification] = useState<string | null>(null);
 
   // Timer tracking per question
@@ -74,6 +75,7 @@ export const ChallengeScene: React.FC<ChallengeSceneProps> = ({
     setReason('');
     setHasChecked(false);
     setIsAnswerCorrect(false);
+    setWasCorrectBeforeSubmit(false);
     setHintNotification(null);
     setElapsedSeconds(0);
   }, [currentQuestion.id]);
@@ -128,6 +130,7 @@ export const ChallengeScene: React.FC<ChallengeSceneProps> = ({
       { allowNumericEquivalent: currentQuestion.allowNumericEquivalent }
     );
 
+    setWasCorrectBeforeSubmit(Boolean(progress.attempts[currentQuestion.id]?.isCorrect));
     setHasChecked(true);
     setIsAnswerCorrect(isCorrect);
 
@@ -214,7 +217,7 @@ export const ChallengeScene: React.FC<ChallengeSceneProps> = ({
                     <span>{Math.max(0, timerSeconds - elapsedSeconds)}s</span>
                   </span>
                 )}
-                {wasPreviouslyCorrect && (
+                {isQuestionAlreadyCorrect && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 dark:bg-emerald-950 px-2.5 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
                     <CheckCircle2 className="h-3 w-3" />
                     <span>Sudah dijawab benar sebelumnya — tanpa tambahan poin</span>
@@ -335,7 +338,7 @@ export const ChallengeScene: React.FC<ChallengeSceneProps> = ({
                     <>
                       <Check className="h-4 w-4 text-emerald-600" />
                       <span>
-                        {wasPreviouslyCorrect
+                        {wasCorrectBeforeSubmit
                           ? 'Poin soal ini sudah diperoleh sebelumnya — tidak ada tambahan poin/energi.'
                           : lastReward
                           ? `Jawaban Benar! +${lastReward.total} Poin (+${lastReward.points} dasar${

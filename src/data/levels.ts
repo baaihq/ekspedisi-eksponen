@@ -39,5 +39,6 @@ export const GAME_LEVELS: LevelInfo[] = [
     totalQuestions: 4,
     pointsPerQuestion: 300,
     penaltyPerWrong: 75,
+    timerSeconds: 90,
   },
 ];

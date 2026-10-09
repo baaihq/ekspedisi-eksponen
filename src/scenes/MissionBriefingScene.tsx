@@ -108,7 +108,7 @@ export const MissionBriefingScene: React.FC<MissionBriefingSceneProps> = ({
                 Mode Waktu (Opsional)
               </span>
               <span className="text-[10px] text-slate-400">
-                Bonus skor +15% jika menjawab cepat
+                Bonus skor +20% / +10% jika menjawab cepat
               </span>
             </div>
             <div className="grid grid-cols-4 gap-2">

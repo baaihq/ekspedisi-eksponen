@@ -62,8 +62,14 @@ export default function App() {
   // Active question set for current selected level and episode
   const [activeQuestions, setActiveQuestions] = useState<QuestionData[]>([]);
 
-  // Optional timer mode (seconds per question)
-  const [timerSeconds, setTimerSeconds] = useState<number | undefined>(undefined);
+  // Optional timer mode (seconds per question) - defaults to level's timerSeconds (e.g. 90s for Master)
+  const [timerSeconds, setTimerSeconds] = useState<number | undefined>(() => {
+    const activeLevels = getEpisodeLevels(activeEpisodeId);
+    const lvlConfig =
+      activeLevels.find((l) => l.id === progress.selectedLevel) ||
+      GAME_LEVELS.find((l) => l.id === progress.selectedLevel);
+    return lvlConfig?.timerSeconds;
+  });
   // Last calculated reward for feedback display in ChallengeScene
   const [lastReward, setLastReward] = useState<AnswerReward | null>(null);
 
@@ -192,6 +198,11 @@ export default function App() {
   // 3. Level selected from Map
   const handleSelectLevel = (level: DifficultyLevel) => {
     updateProgress({ selectedLevel: level, currentQuestionIndex: 0 });
+    const activeLevels = getEpisodeLevels(activeEpisodeId);
+    const lvlConfig =
+      activeLevels.find((l) => l.id === level) ||
+      GAME_LEVELS.find((l) => l.id === level);
+    setTimerSeconds(lvlConfig?.timerSeconds);
     setCurrentScene('briefing');
   };
 
