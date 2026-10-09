@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { SceneName, TeamData, TeamProgress, DifficultyLevel, QuestionData } from './types/game';
 import { syncService } from './services/syncService';
+import { settingsService } from './services/settingsService';
 import { EPISODES, generateQuestionsForEpisode } from './data/episodes';
 import { GAME_LEVELS } from './data/levels';
 import { audioManager } from './audio/audioManager';
@@ -15,20 +16,27 @@ import { ChallengeScene } from './scenes/ChallengeScene';
 import { ResultScene } from './scenes/ResultScene';
 import { TeacherDashboardScene } from './scenes/TeacherDashboardScene';
 
+function resolveInitialEpisodeId(): string {
+  const saved = settingsService.getActiveEpisode();
+  const found = EPISODES.find((e) => e.id === saved);
+  return found && found.isActive ? found.id : 'episode-1';
+}
+
 export default function App() {
   // Global team state
   const [team, setTeam] = useState<TeamData | null>(() => syncService.loadCurrentTeam());
 
-  // Active episode state (default 'episode-1')
-  const [activeEpisodeId, setActiveEpisodeId] = useState<string>('episode-1');
+  // Active episode state (persisted across reloads)
+  const [initialEpisodeId] = useState<string>(resolveInitialEpisodeId);
+  const [activeEpisodeId, setActiveEpisodeId] = useState<string>(initialEpisodeId);
 
   // Global progress state
   const [progress, setProgress] = useState<TeamProgress>(() => {
-    const loaded = syncService.loadCurrentProgress('episode-1');
+    const loaded = syncService.loadCurrentProgress(initialEpisodeId);
     if (loaded) return loaded;
     return {
       teamId: '',
-      episodeId: 'episode-1',
+      episodeId: initialEpisodeId,
       selectedLevel: 'jelajah',
       currentQuestionIndex: 0,
       completed: false,
@@ -91,6 +99,7 @@ export default function App() {
   const handleSetupComplete = (newTeam: TeamData) => {
     setTeam(newTeam);
     syncService.saveTeam(newTeam);
+    settingsService.setActiveEpisode('episode-1');
     setActiveEpisodeId('episode-1');
 
     const initialProgress: TeamProgress = {
@@ -116,6 +125,7 @@ export default function App() {
   // Reset team from MapScene modal
   const handleResetTeam = () => {
     syncService.clearLocalTeam();
+    settingsService.setActiveEpisode('episode-1');
     setTeam(null);
     setActiveEpisodeId('episode-1');
     setProgress({
@@ -140,6 +150,7 @@ export default function App() {
     const ep = EPISODES.find((e) => e.id === episodeId);
     if (!ep || !ep.isActive) return;
 
+    settingsService.setActiveEpisode(episodeId);
     setActiveEpisodeId(episodeId);
     const existingProg = syncService.loadProgressForEpisode(episodeId);
     if (existingProg) {

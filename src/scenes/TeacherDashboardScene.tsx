@@ -22,7 +22,13 @@ import {
 } from 'lucide-react';
 import { syncService } from '../services/syncService';
 import { TeacherSessionSummary, TeacherTeamSummary } from '../types/game';
-import { isSupabaseConfigured, getSupabase } from '../services/supabaseClient';
+import {
+  isSupabaseConfigured,
+  getSupabase,
+  getSupabaseUrl,
+  getSupabaseHost,
+  validateSupabaseUrl,
+} from '../services/supabaseClient';
 import { authService, UserProfile } from '../services/authService';
 import { settingsService } from '../services/settingsService';
 import { formatPowerText } from '../lib/superscript';
@@ -226,10 +232,45 @@ export const TeacherDashboardScene: React.FC<TeacherDashboardSceneProps> = ({
       return;
     }
 
+    // 0. Validasi format URL
+    const currentUrl = getSupabaseUrl();
+    const urlValidation = validateSupabaseUrl(currentUrl);
+    if (!urlValidation.isValid) {
+      setConnectionStatus({
+        tested: true,
+        success: false,
+        message: 'URL Supabase tidak valid. Gunakan format https://<project-ref>.supabase.co (tanpa /rest/v1/).',
+        details:
+          urlValidation.error ||
+          'URL Supabase tidak valid. Gunakan format https://<project-ref>.supabase.co (tanpa /rest/v1/).',
+      });
+      setIsTestingConnection(false);
+      return;
+    }
+
+    const formatErrorMessage = (msg?: string) => {
+      const text = msg || '';
+      if (text.includes('Failed to fetch') || text.includes('NetworkError')) {
+        return 'Tidak bisa menjangkau server Supabase. Periksa URL konfigurasi, koneksi internet, dan apakah domain supabase.co diblokir jaringan.';
+      }
+      return text;
+    };
+
     try {
       // 1. Uji tabel
       const { error: teamsError } = await supabase.from('teams').select('id', { count: 'exact', head: true });
       if (teamsError) {
+        const errorText = formatErrorMessage(teamsError.message);
+        if (errorText.includes('Tidak bisa menjangkau server Supabase')) {
+          setConnectionStatus({
+            tested: true,
+            success: false,
+            message: 'Tidak bisa menjangkau server Supabase. Periksa URL konfigurasi, koneksi internet, dan apakah domain supabase.co diblokir jaringan.',
+            details: errorText,
+          });
+          return;
+        }
+
         if (teamsError.code === '42P01') {
           setConnectionStatus({
             tested: true,
@@ -244,7 +285,7 @@ export const TeacherDashboardScene: React.FC<TeacherDashboardSceneProps> = ({
             tested: true,
             success: false,
             message: 'Koneksi Tabel Mengalami Kendala',
-            details: teamsError.message,
+            details: errorText,
           });
           return;
         }
@@ -259,15 +300,28 @@ export const TeacherDashboardScene: React.FC<TeacherDashboardSceneProps> = ({
         p_session_code: '__ping__',
       });
 
-      if (rpcError && rpcError.code === '42883') {
-        setConnectionStatus({
-          tested: true,
-          success: false,
-          message: 'Tabel Ditemukan, Namun Fungsi RPC Belum Dibuat',
-          details:
-            'Tabel ada, tetapi fungsi RPC (game_save_team, dsb.) belum dipasang. Jalankan skrip supabase/schema.sql lengkap di SQL Editor Supabase.',
-        });
-        return;
+      if (rpcError) {
+        const rpcErrorText = formatErrorMessage(rpcError.message);
+        if (rpcErrorText.includes('Tidak bisa menjangkau server Supabase')) {
+          setConnectionStatus({
+            tested: true,
+            success: false,
+            message: 'Tidak bisa menjangkau server Supabase. Periksa URL konfigurasi, koneksi internet, dan apakah domain supabase.co diblokir jaringan.',
+            details: rpcErrorText,
+          });
+          return;
+        }
+
+        if (rpcError.code === '42883') {
+          setConnectionStatus({
+            tested: true,
+            success: false,
+            message: 'Tabel Ditemukan, Namun Fungsi RPC Belum Dibuat',
+            details:
+              'Tabel ada, tetapi fungsi RPC (game_save_team, dsb.) belum dipasang. Jalankan skrip supabase/schema.sql lengkap di SQL Editor Supabase.',
+          });
+          return;
+        }
       }
 
       // 3. Status Auth Guru
@@ -283,11 +337,17 @@ export const TeacherDashboardScene: React.FC<TeacherDashboardSceneProps> = ({
         details: `Seluruh tabel dan fungsi RPC keamanan siswa aktif. ${authInfo}`,
       });
     } catch (err: any) {
+      const rawMsg = err?.message || String(err || '');
+      const formatted = formatErrorMessage(rawMsg);
+      const isNetwork = formatted.includes('Tidak bisa menjangkau server Supabase');
+
       setConnectionStatus({
         tested: true,
         success: false,
-        message: 'Gagal Menghubungi Supabase',
-        details: err?.message || 'Pastikan perangkat terhubung internet dan server Supabase aktif.',
+        message: isNetwork
+          ? 'Tidak bisa menjangkau server Supabase. Periksa URL konfigurasi, koneksi internet, dan apakah domain supabase.co diblokir jaringan.'
+          : 'Gagal Menghubungi Supabase',
+        details: formatted || 'Pastikan perangkat terhubung internet dan server Supabase aktif.',
       });
     } finally {
       setIsTestingConnection(false);
@@ -559,6 +619,15 @@ on conflict (episode_number) do update
               <span>{isTestingConnection ? 'Menguji...' : 'Uji Koneksi'}</span>
             </button>
           </div>
+
+          {getSupabaseHost() && (
+            <div className="mb-2 flex items-center gap-1.5 text-[11px] text-slate-600 dark:text-slate-400">
+              <span className="font-semibold text-slate-500 dark:text-slate-400">Host:</span>
+              <code className="rounded bg-slate-200/80 dark:bg-slate-700/80 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-indigo-700 dark:text-indigo-300">
+                {getSupabaseHost()}
+              </code>
+            </div>
+          )}
 
           {connectionStatus.tested ? (
             <div

@@ -16,6 +16,49 @@ export function isSupabaseConfigured(): boolean {
   );
 }
 
+export function getSupabaseUrl(): string | undefined {
+  return supabaseUrl;
+}
+
+export function getSupabaseHost(): string | null {
+  if (!supabaseUrl) return null;
+  try {
+    const parsed = new URL(supabaseUrl.trim());
+    return parsed.hostname;
+  } catch {
+    const match = supabaseUrl.trim().match(/https?:\/\/([^/:?\s]+)/);
+    return match ? match[1] : null;
+  }
+}
+
+export function validateSupabaseUrl(url?: string): { isValid: boolean; error?: string } {
+  if (!url) {
+    return {
+      isValid: false,
+      error: 'URL Supabase tidak valid. Gunakan format https://<project-ref>.supabase.co (tanpa /rest/v1/).',
+    };
+  }
+
+  // URL tidak boleh berisi /rest/v1, tanda kutip, atau spasi
+  if (url.includes('/rest/v1') || url.includes('"') || url.includes("'") || /\s/.test(url)) {
+    return {
+      isValid: false,
+      error: 'URL Supabase tidak valid. Gunakan format https://<project-ref>.supabase.co (tanpa /rest/v1/).',
+    };
+  }
+
+  const clean = url.trim().replace(/\/+$/, '');
+  // URL harus diawali https:// dan berakhiran .supabase.co
+  if (!clean.startsWith('https://') || !clean.endsWith('.supabase.co')) {
+    return {
+      isValid: false,
+      error: 'URL Supabase tidak valid. Gunakan format https://<project-ref>.supabase.co (tanpa /rest/v1/).',
+    };
+  }
+
+  return { isValid: true };
+}
+
 export function getSupabase(): SupabaseClient | null {
   if (!isSupabaseConfigured()) {
     return null;

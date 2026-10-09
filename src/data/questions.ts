@@ -70,14 +70,13 @@ function generateJelajahQuestions(rng: DeterministicRandom): QuestionData[] {
     {
       id: 'jelajah_q2',
       level: 'jelajah',
-      type: 'numeric_value',
-      title: 'Tantangan 2: Menuliskan Perkalian Berulang dari Bentuk Pangkat',
+      type: 'mixed',
+      title: 'Tantangan 2: Menjabarkan Bentuk Pangkat',
       instruction:
-        `Uraikan bentuk perpangkatan modul energi ${powerText(base2, exp2)} ke dalam bentuk perkalian berulang lengkap.`,
+        'Uraikan bentuk perpangkatan inti daya berikut ke dalam bentuk perkalian berulang yang lengkap.',
       latexProblem: `${base2}^{${exp2}}`,
       acceptableAnswers: [
         repeatedFactors2,
-        Array(exp2).fill(base2).join(' * '),
         Array(exp2).fill(base2).join(' x '),
         Array(exp2).fill(base2).join(' × '),
         Array(exp2).fill(base2).join('*'),
@@ -110,15 +109,15 @@ function generateJelajahQuestions(rng: DeterministicRandom): QuestionData[] {
       type: 'numeric_value',
       title: 'Tantangan 4: Menghitung Nilai Perpangkatan Sederhana',
       instruction:
-        `Hitung nilai daya akhir yang dihasilkan oleh inti kristal ${powerText(base4, exp4)}.`,
-      latexProblem: `${base4}^{${exp4}} = \\dots`,
+        'Hitunglah nilai numerik total daya yang dihasilkan oleh modul perpangkatan berikut.',
+      latexProblem: `${base4}^{${exp4}}`,
       acceptableAnswers: [
         String(value4),
         `${base4}^${exp4} = ${value4}`,
       ],
       expectedNumericValue: value4,
-      hint: `Kalikan bilangan ${base4} secara berulang sebanyak ${exp4} kali: ${Array(exp4).fill(base4).join(' × ')}. Hasil akhirnya adalah ${value4}.`,
-      explanation: `Perhitungan ${base4}^${exp4} adalah ${Array(exp4).fill(base4).join(' × ')} = ${value4}.`,
+      hint: `Hitung hasil kali perkalian berulang: ${Array(exp4).fill(base4).join(' × ')}. Lakukan perkalian bertahap untuk mendapatkan nilai akhirnya (${value4}).`,
+      explanation: `Nilai dari ${base4}^${exp4} = ${Array(exp4).fill(base4).join(' × ')} = ${value4}.`,
     },
     // Pengayaan Aljabar: Perkalian berulang variabel
     {
