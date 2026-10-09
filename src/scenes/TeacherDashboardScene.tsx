@@ -862,7 +862,7 @@ on conflict (episode_number) do update
                   )}
                 </div>
 
-                {/* Progress Bar (Total 12 Soal) */}
+                {/* Progress Bar */}
                 <div className="mb-3">
                   <div className="flex justify-between text-[10px] font-semibold text-slate-500 mb-1">
                     <span>Progres Kurikulum ({t.completedLevels.length}/3 Tingkat)</span>

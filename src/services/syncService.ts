@@ -1,4 +1,5 @@
 import { TeamData, TeamProgress, QuestionAttempt, TeacherSessionSummary, TeacherTeamSummary } from '../types/game';
+import { GAME_LEVELS } from '../data/levels';
 import { getSupabase, isSupabaseConfigured } from './supabaseClient';
 
 const STORAGE_KEYS = {
@@ -284,7 +285,8 @@ export const syncService = {
           hint_tokens,
           completed,
           episode_completed,
-          completed_levels
+          completed_levels,
+          updated_at
         ),
         question_attempts (
           id,
@@ -312,21 +314,41 @@ export const syncService = {
       };
     }
 
+    const questionsForLevel = (levelId: string) =>
+      GAME_LEVELS.find((l) => l.id === levelId)?.totalQuestions ?? 0;
+
+    const TOTAL_EPISODE_QUESTIONS = GAME_LEVELS.reduce((sum, l) => sum + l.totalQuestions, 0);
+
     const teams: TeacherTeamSummary[] = teamsData.map((t: any) => {
       // Ambang data progres terbaru atau level yang sedang aktif
       const progList: any[] = t.team_progress || [];
-      // Ambil record yang paling mutakhir atau record pertama
-      const prog = progList[0] || {};
+      // Ambil record yang paling mutakhir berdasarkan updated_at
+      const sortedProgList = [...progList].sort((a, b) => {
+        const timeA = a.updated_at ? new Date(a.updated_at).getTime() : 0;
+        const timeB = b.updated_at ? new Date(b.updated_at).getTime() : 0;
+        return timeB - timeA;
+      });
+      const prog = sortedProgList[0] || {};
 
       // Selesai 3 level = Episode 1 Tuntas
       const completedLevelsList: string[] = prog.completed_levels || [];
-      const isEpisodeDone = Boolean(prog.episode_completed || completedLevelsList.length >= 3);
+      const isEpisodeDone = Boolean(prog.episode_completed || completedLevelsList.length >= GAME_LEVELS.length);
 
-      // Hitung persentase progres secara stabil dari akumulasi 12 soal (3 level x 4)
-      const baseSolvedCount = completedLevelsList.length * 4;
-      const currentLevelSolved = prog.completed ? 0 : Math.min(4, prog.current_question_index || 0);
-      const totalSolved = isEpisodeDone ? 12 : Math.min(12, baseSolvedCount + currentLevelSolved);
-      const progressPercent = Math.min(100, Math.round((totalSolved / 12) * 100));
+      // Hitung progres dari konfigurasi tingkat secara dinamis
+      const baseSolved = completedLevelsList.reduce((sum, id) => sum + questionsForLevel(id), 0);
+      const currentLevelTotal = questionsForLevel(prog.selected_level);
+      const levelIsDone = completedLevelsList.includes(prog.selected_level);
+      const currentSolved = levelIsDone
+        ? 0
+        : Math.min(currentLevelTotal, prog.current_question_index || 0);
+
+      const totalSolved = isEpisodeDone
+        ? TOTAL_EPISODE_QUESTIONS
+        : Math.min(TOTAL_EPISODE_QUESTIONS, baseSolved + currentSolved);
+
+      const progressPercent = TOTAL_EPISODE_QUESTIONS > 0
+        ? Math.min(100, Math.round((totalSolved / TOTAL_EPISODE_QUESTIONS) * 100))
+        : 0;
 
       const attemptsList = (t.question_attempts || []).map((att: any) => ({
         id: att.id,
