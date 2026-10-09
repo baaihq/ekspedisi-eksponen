@@ -4,6 +4,7 @@ import { getSupabase, isSupabaseConfigured } from './supabaseClient';
 const STORAGE_KEYS = {
   CURRENT_TEAM: 'ekspedisi_current_team',
   CURRENT_PROGRESS: 'ekspedisi_current_progress',
+  PROGRESS_MAP: 'ekspedisi_progress_map',
   PENDING_SYNC: 'ekspedisi_pending_sync',
   TEACHER_SESSIONS: 'ekspedisi_teacher_sessions',
 };
@@ -106,23 +107,70 @@ export const syncService = {
   },
 
   /**
-   * Clears current team and progress locally on this device (for Ganti Tim)
+   * Loads all progress mapped by episodeId from localStorage
+   * Migrates legacy ekspedisi_current_progress if needed
+   */
+  loadProgressMap(): Record<string, TeamProgress> {
+    try {
+      const rawMap = localStorage.getItem(STORAGE_KEYS.PROGRESS_MAP);
+      let map: Record<string, TeamProgress> = rawMap ? JSON.parse(rawMap) : {};
+
+      // Migrasi: jika belum ada di map tapi ada di ekspedisi_current_progress lama
+      const legacyRaw = localStorage.getItem(STORAGE_KEYS.CURRENT_PROGRESS);
+      if (legacyRaw) {
+        try {
+          const legacy: TeamProgress = JSON.parse(legacyRaw);
+          const epId = legacy.episodeId || 'episode-1';
+          if (!map[epId]) {
+            map[epId] = legacy;
+            localStorage.setItem(STORAGE_KEYS.PROGRESS_MAP, JSON.stringify(map));
+          }
+        } catch {
+          // ignore parse error
+        }
+      }
+      return map;
+    } catch {
+      return {};
+    }
+  },
+
+  /**
+   * Loads progress for a specific episode from the map
+   */
+  loadProgressForEpisode(episodeId: string): TeamProgress | null {
+    const map = this.loadProgressMap();
+    return map[episodeId] || null;
+  },
+
+  /**
+   * Clears current team and all progress locally on this device (for Ganti Tim)
    */
   clearLocalTeam(): void {
     try {
       localStorage.removeItem(STORAGE_KEYS.CURRENT_TEAM);
       localStorage.removeItem(STORAGE_KEYS.CURRENT_PROGRESS);
+      localStorage.removeItem(STORAGE_KEYS.PROGRESS_MAP);
     } catch {
       // ignore
     }
   },
 
   /**
-   * Saves team progress locally and to Supabase via RPC game_save_progress
+   * Saves team progress locally (in progress map) and to Supabase via RPC game_save_progress
    */
   async saveProgress(progress: TeamProgress): Promise<void> {
-    // 1. Always save locally
-    localStorage.setItem(STORAGE_KEYS.CURRENT_PROGRESS, JSON.stringify(progress));
+    const episodeId = progress.episodeId || 'episode-1';
+
+    // 1. Simpan di map per-episode dan simpan juga active progress di localStorage
+    try {
+      const map = this.loadProgressMap();
+      map[episodeId] = { ...progress, episodeId };
+      localStorage.setItem(STORAGE_KEYS.PROGRESS_MAP, JSON.stringify(map));
+      localStorage.setItem(STORAGE_KEYS.CURRENT_PROGRESS, JSON.stringify(map[episodeId]));
+    } catch (err) {
+      console.warn('Error saving progress to localStorage map:', err);
+    }
 
     // 2. Remote sync via RPC if possible
     const supabase = getSupabase();
@@ -136,7 +184,7 @@ export const syncService = {
 
         const { error } = await supabase.rpc('game_save_progress', {
           p_team_id: progress.teamId,
-          p_episode_id: progress.episodeId || 'episode-1',
+          p_episode_id: episodeId,
           p_selected_level: progress.selectedLevel,
           p_current_question_index: progress.currentQuestionIndex,
           p_completed: Boolean(progress.completed),
@@ -161,12 +209,22 @@ export const syncService = {
   },
 
   /**
-   * Loads current progress from localStorage
+   * Loads current progress from localStorage (with optional episodeId)
    */
-  loadCurrentProgress(): TeamProgress | null {
+  loadCurrentProgress(episodeId: string = 'episode-1'): TeamProgress | null {
     try {
+      const map = this.loadProgressMap();
+      if (map[episodeId]) {
+        return map[episodeId];
+      }
       const data = localStorage.getItem(STORAGE_KEYS.CURRENT_PROGRESS);
-      return data ? JSON.parse(data) : null;
+      if (data) {
+        const parsed: TeamProgress = JSON.parse(data);
+        if ((parsed.episodeId || 'episode-1') === episodeId) {
+          return parsed;
+        }
+      }
+      return null;
     } catch {
       return null;
     }

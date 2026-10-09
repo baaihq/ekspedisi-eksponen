@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { SceneName, TeamData, TeamProgress, DifficultyLevel, QuestionData } from './types/game';
 import { syncService } from './services/syncService';
-import { generateQuestionsForLevel } from './data/questions';
+import { EPISODES, generateQuestionsForEpisode } from './data/episodes';
 import { GAME_LEVELS } from './data/levels';
 import { audioManager } from './audio/audioManager';
 
@@ -19,9 +19,12 @@ export default function App() {
   // Global team state
   const [team, setTeam] = useState<TeamData | null>(() => syncService.loadCurrentTeam());
 
+  // Active episode state (default 'episode-1')
+  const [activeEpisodeId, setActiveEpisodeId] = useState<string>('episode-1');
+
   // Global progress state
   const [progress, setProgress] = useState<TeamProgress>(() => {
-    const loaded = syncService.loadCurrentProgress();
+    const loaded = syncService.loadCurrentProgress('episode-1');
     if (loaded) return loaded;
     return {
       teamId: '',
@@ -45,16 +48,16 @@ export default function App() {
     return savedTeam ? 'map' : 'setup';
   });
 
-  // Active question set for current selected level
+  // Active question set for current selected level and episode
   const [activeQuestions, setActiveQuestions] = useState<QuestionData[]>([]);
 
-  // Update active questions whenever level or team seed changes
+  // Update active questions whenever level, episode, or team seed changes
   useEffect(() => {
     if (team) {
-      const q = generateQuestionsForLevel(progress.selectedLevel, team.seed);
+      const q = generateQuestionsForEpisode(activeEpisodeId, progress.selectedLevel, team.seed);
       setActiveQuestions(q);
     }
-  }, [team, progress.selectedLevel]);
+  }, [team, activeEpisodeId, progress.selectedLevel]);
 
   // Ambience and music playback according to active scene
   useEffect(() => {
@@ -78,7 +81,7 @@ export default function App() {
   // Sync state whenever team or progress updates
   const updateProgress = (newProg: Partial<TeamProgress>) => {
     setProgress((prev) => {
-      const updated = { ...prev, ...newProg };
+      const updated = { ...prev, ...newProg, episodeId: activeEpisodeId };
       syncService.saveProgress(updated);
       return updated;
     });
@@ -88,6 +91,7 @@ export default function App() {
   const handleSetupComplete = (newTeam: TeamData) => {
     setTeam(newTeam);
     syncService.saveTeam(newTeam);
+    setActiveEpisodeId('episode-1');
 
     const initialProgress: TeamProgress = {
       teamId: newTeam.id,
@@ -113,6 +117,7 @@ export default function App() {
   const handleResetTeam = () => {
     syncService.clearLocalTeam();
     setTeam(null);
+    setActiveEpisodeId('episode-1');
     setProgress({
       teamId: '',
       episodeId: 'episode-1',
@@ -128,6 +133,36 @@ export default function App() {
       unlockedHints: [],
     });
     setCurrentScene('setup');
+  };
+
+  // Select episode from MapScene
+  const handleSelectEpisode = (episodeId: string) => {
+    const ep = EPISODES.find((e) => e.id === episodeId);
+    if (!ep || !ep.isActive) return;
+
+    setActiveEpisodeId(episodeId);
+    const existingProg = syncService.loadProgressForEpisode(episodeId);
+    if (existingProg) {
+      setProgress(existingProg);
+    } else {
+      const initialProgress: TeamProgress = {
+        teamId: team?.id || '',
+        episodeId,
+        selectedLevel: 'jelajah',
+        currentQuestionIndex: 0,
+        completed: false,
+        score: 0,
+        energyTokens: 100,
+        hintTokens: 5,
+        completedLevels: [],
+        episode1Completed: false,
+        attempts: {},
+        unlockedHints: [],
+      };
+      setProgress(initialProgress);
+      syncService.saveProgress(initialProgress);
+    }
+    setCurrentScene('map');
   };
 
   // 2. Intro completed
@@ -293,6 +328,9 @@ export default function App() {
             <MapScene
               team={team}
               progress={progress}
+              episodes={EPISODES}
+              activeEpisodeId={activeEpisodeId}
+              onSelectEpisode={handleSelectEpisode}
               onSelectLevel={handleSelectLevel}
               onResetTeam={handleResetTeam}
             />

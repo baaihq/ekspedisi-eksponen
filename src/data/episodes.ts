@@ -32,7 +32,7 @@ export const EPISODES: EpisodeInfo[] = [
     curriculumTopic: 'P3: Pangkat Nol, Bulat Negatif & Notasi Ilmiah',
     description: 'Selidiki fluktuasi sub-atomik mikroskopis pada terowongan bawah tanah Kota Data menggunakan pangkat negatif dan notasi ilmiah.',
     isActive: false, // Segera
-    levels: GAME_LEVELS,
+    levels: [],
   },
   {
     id: 'episode-3',
@@ -42,7 +42,7 @@ export const EPISODES: EpisodeInfo[] = [
     curriculumTopic: 'P4: Pangkat Pecahan + P5: Operasi Bentuk Akar & Rasionalisasi',
     description: 'Pecahkan kode resonansi kristal energi dan sederhanakan bentuk akar fraksional untuk membuka jembatan antar-pulau data.',
     isActive: false, // Segera
-    levels: GAME_LEVELS,
+    levels: [],
   },
   {
     id: 'episode-4',
@@ -52,7 +52,7 @@ export const EPISODES: EpisodeInfo[] = [
     curriculumTopic: 'P6: Penerapan Kontekstual & Asesmen Bab Eksponen',
     description: 'Satukan seluruh fragmen inti dan kalibrasikan sistem kecerdasan Kota Data melalui asesmen komprehensif bab perpangkatan.',
     isActive: false, // Segera
-    levels: GAME_LEVELS,
+    levels: [],
   },
 ];
 
@@ -65,6 +65,12 @@ export function generateQuestionsForEpisode(
   level: DifficultyLevel,
   seed: number
 ): QuestionData[] {
+  // Episode selain Episode 1 belum aktif dan tidak memiliki soal
+  if (episodeId !== 'episode-1') {
+    return [];
+  }
   // Episode 1 menggunakan generator modul bab 1
   return generateQuestionsForLevel(level, seed);
 }
+
+

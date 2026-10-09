@@ -80,7 +80,6 @@ export type SceneName =
   | 'map'
   | 'briefing'
   | 'challenge'
-  | 'feedback'
   | 'result'
   | 'teacher';
 

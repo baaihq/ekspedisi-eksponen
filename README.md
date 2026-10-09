@@ -2,6 +2,8 @@
 
 Game petualangan edukasi matematika interaktif materi **Eksponen (Perpangkatan)** untuk fase E / SMA Kelas X. Dirancang khusus untuk pembelajaran kelompok kooperatif, eksplorasi konseptual, dan pemantauan langsung oleh guru (*real-time teacher dashboard*).
 
+> 📖 **Panduan Guru & Operator**: Untuk instruksi lengkap penggunaan di kelas, pembuatan project Supabase, aktivasi dashboard guru, troubleshooting, dan deployment, lihat [TUTORIAL.md](./TUTORIAL.md).
+
 ---
 
 ## 🚀 Fitur Utama
@@ -51,7 +53,12 @@ Aplikasi akan aktif di `http://localhost:3000`.
 npm run lint
 ```
 
-### 4. Build untuk Produksi
+### 4. Pengecekan Integritas Soal Matematika
+```bash
+npm run check:questions
+```
+
+### 5. Build untuk Produksi
 ```bash
 npm run build
 ```

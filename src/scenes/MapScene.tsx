@@ -2,21 +2,26 @@ import React, { useState } from 'react';
 import { Zap, HelpCircle, CheckCircle2, ChevronRight, Award, LogOut, AlertTriangle, Layers } from 'lucide-react';
 import { TeamData, TeamProgress, DifficultyLevel } from '../types/game';
 import { GAME_LEVELS } from '../data/levels';
-import { EPISODES } from '../data/episodes';
+import { EpisodeInfo } from '../data/episodes';
 import { GameImage } from '../components/common/GameImage';
 import { audioManager } from '../audio/audioManager';
 
 interface MapSceneProps {
   team: TeamData;
   progress: TeamProgress;
+  episodes: EpisodeInfo[];
+  activeEpisodeId: string;
+  onSelectEpisode: (episodeId: string) => void;
   onSelectLevel: (level: DifficultyLevel) => void;
   onResetTeam: () => void;
-  onOpenTeacherDashboard?: () => void;
 }
 
 export const MapScene: React.FC<MapSceneProps> = ({
   team,
   progress,
+  episodes,
+  activeEpisodeId,
+  onSelectEpisode,
   onSelectLevel,
   onResetTeam,
 }) => {
@@ -24,7 +29,6 @@ export const MapScene: React.FC<MapSceneProps> = ({
     progress.selectedLevel || 'jelajah'
   );
   const [showResetConfirm, setShowResetConfirm] = useState(false);
-  const [selectedEpisodeId, setSelectedEpisodeId] = useState('episode-1');
 
   const handleSelect = (level: DifficultyLevel) => {
     setSelectedLevelId(level);
@@ -161,20 +165,24 @@ export const MapScene: React.FC<MapSceneProps> = ({
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          {EPISODES.map((ep) => {
-            const isSelected = selectedEpisodeId === ep.id;
+          {episodes.map((ep) => {
+            const isSelected = activeEpisodeId === ep.id;
             return (
               <button
                 key={ep.id}
+                type="button"
                 onClick={() => {
-                  if (ep.isActive) setSelectedEpisodeId(ep.id);
+                  if (ep.isActive) {
+                    audioManager.playSfx('click');
+                    onSelectEpisode(ep.id);
+                  }
                 }}
                 disabled={!ep.isActive}
                 className={`relative flex flex-col items-start p-2.5 rounded-2xl border text-left transition-all ${
                   isSelected
                     ? 'border-indigo-600 bg-indigo-50/70 dark:bg-indigo-950/40 dark:border-indigo-500'
                     : ep.isActive
-                    ? 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300'
+                    ? 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300 cursor-pointer'
                     : 'border-slate-200/60 dark:border-slate-800/60 bg-slate-50 dark:bg-slate-800/40 opacity-60 cursor-not-allowed'
                 }`}
               >
